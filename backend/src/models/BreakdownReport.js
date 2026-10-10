@@ -22,7 +22,16 @@ const breakdownReportSchema = new mongoose.Schema(
     breakdownType: {
       type: String,
       required: true,
-      enum: ['MECHANICAL', 'ELECTRICAL', 'YARN_BREAKAGE', 'POWER_OUTAGE', 'PNEUMATIC', 'ELECTRONIC_SENSOR'],
+      enum: [
+        'MECHANICAL',
+        'ELECTRICAL',
+        'YARN_BREAKAGE',
+        'POWER_OUTAGE',
+        'PNEUMATIC',
+        'ELECTRONIC_SENSOR',
+        'MAINTENANCE_REQUIRED',
+        'MISSING_MATERIAL',
+      ],
     },
     severity: {
       type: String,
@@ -33,6 +42,18 @@ const breakdownReportSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
+    },
+    missingMaterialDetails: {
+      materialName: String,
+      requiredQuantity: Number,
+      unit: String,
+    },
+    idempotencyKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
     },
     reportedAt: {
       type: Date,

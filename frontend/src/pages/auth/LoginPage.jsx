@@ -68,9 +68,9 @@ export function LoginPage({ onNavigateToRegister }) {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 mb-2">
             <Factory className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Everest Textile OS</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">FabricOps</h1>
           <p className="text-xs text-slate-400 max-w-xs mx-auto">
-            Manufacturing Operating System &bull; Everest Textile Mills
+            Manufacturing Operating System &bull; FabricOps Mills
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export function LoginPage({ onNavigateToRegister }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@everesttextiles.com"
+                  placeholder="name@fabricops.com"
                   disabled={loading}
                   className="w-full rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
                 />
@@ -165,7 +165,7 @@ export function LoginPage({ onNavigateToRegister }) {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-200">Factory Supervisor (Admin)</p>
-                    <p className="text-[11px] text-slate-500">admin@everesttextiles.com</p>
+                    <p className="text-[11px] text-slate-500">admin@fabricops.com</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
@@ -201,7 +201,7 @@ export function LoginPage({ onNavigateToRegister }) {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-200">Loom Master Rajesh (Operator)</p>
-                    <p className="text-[11px] text-slate-500">rajesh.weaver@everesttextiles.com</p>
+                    <p className="text-[11px] text-slate-500">rajesh.weaver@fabricops.com</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all" />
@@ -225,7 +225,7 @@ export function LoginPage({ onNavigateToRegister }) {
 
         {/* Security Notice */}
         <p className="text-center text-[11px] text-slate-500">
-          Protected by Everest Mill Sentinel. All sessions authenticated via HTTP-Only encrypted cookies.
+          Protected by FabricOps Sentinel. All sessions authenticated via HTTP-Only encrypted cookies.
         </p>
       </div>
     </div>

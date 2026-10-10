@@ -1,6 +1,11 @@
 import { Order, Quotation, CustomerProfile, User } from '../models/index.js';
 import { confirmOrderTransaction } from '../services/transaction.service.js';
 import { createAndSendNotification } from '../services/notification.service.js';
+import {
+  getOrderTimeline,
+  updateTimelineStage,
+  recalculateOrderEstimates,
+} from '../services/timeline.service.js';
 import { logger } from '../config/logger.js';
 
 export const confirmOrderHandler = async (req, res, next) => {
@@ -44,7 +49,7 @@ export const confirmOrderHandler = async (req, res, next) => {
       recipientId: quotation.customerId,
       recipientRole: 'CUSTOMER',
       title: `Order ${order.orderNumber} Confirmed!`,
-      message: `Your fabric order ${order.orderNumber} has been officially locked into the Everest Mills production schedule. Target dispatch: ${new Date(order.confirmedDeliveryDate).toISOString().split('T')[0]}.`,
+      message: `Your fabric order ${order.orderNumber} has been officially locked into the FabricOps production schedule. Target dispatch: ${new Date(order.confirmedDeliveryDate).toISOString().split('T')[0]}.`,
       type: 'ORDER_CONFIRMED',
       actionUrl: `/my-orders?id=${order._id}`,
       metadata: { orderId: order._id, orderNumber: order.orderNumber },
@@ -147,13 +152,13 @@ export const getAuthorizedOrderDocument = async (req, res, next) => {
       documentNumber: `DOC-CONF-${order.orderNumber}`,
       issuedDate: order.createdAt,
       millDetails: {
-        companyName: 'Everest Textile Mills Limited',
+        companyName: 'FabricOps Limited',
         division: 'Weaving & Dyeing Operations',
         gstin: '33AAACE2026M1Z8',
         cin: 'L17111TZ2026PLC009988',
         millAddress: 'SF 42/1, Sengunthar Industrial Corridor, Tirupur, Tamil Nadu - 641602, India',
         phone: '+91 (421) 224-5500',
-        email: 'orders@everesttextiles.com',
+        email: 'orders@fabricops.com',
       },
       buyerDetails: {
         companyName: customerProfile?.companyName || order.customerId.name,
@@ -233,6 +238,55 @@ export const getAuthorizedOrderDocument = async (req, res, next) => {
     res.json({
       success: true,
       data: documentPayload,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrderTimelineHandler = async (req, res, next) => {
+  try {
+    const timeline = await getOrderTimeline(req.params.id, req.user);
+    res.json({
+      success: true,
+      data: timeline,
+    });
+  } catch (error) {
+    if (error.message.includes('Cross-customer') || error.message.includes('prohibited')) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: error.message },
+      });
+    }
+    next(error);
+  }
+};
+
+export const updateTimelineStageHandler = async (req, res, next) => {
+  try {
+    const result = await updateTimelineStage({
+      orderId: req.params.id,
+      ...req.body,
+      actorUser: req.user,
+    });
+
+    res.json({
+      success: true,
+      message: 'Timeline milestone updated successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const recalculateOrderEstimatesHandler = async (req, res, next) => {
+  try {
+    const result = await recalculateOrderEstimates(req.params.id, req.body);
+    res.json({
+      success: true,
+      message: 'Order estimates dynamically recalculated',
+      data: result,
     });
   } catch (error) {
     next(error);

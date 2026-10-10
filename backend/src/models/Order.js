@@ -115,6 +115,17 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    estimatedDeliveryDate: {
+      type: Date,
+      index: true,
+    },
+    isAtRiskOfDelay: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    delayRiskReason: String,
+    lastEstimatedRecalculationAt: Date,
   },
   {
     timestamps: true,

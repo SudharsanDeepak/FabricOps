@@ -16,7 +16,7 @@ describe('Health & Metadata Endpoints', () => {
     // Status is either 200 (if MongoDB running) or 503 (if MongoDB is disconnected in standalone test environment)
     expect([200, 503]).toContain(res.statusCode);
     expect(res.body).toHaveProperty('data');
-    expect(res.body.data).toHaveProperty('service', 'Everest Textile OS API');
+    expect(res.body.data).toHaveProperty('service', 'FabricOps API');
     expect(res.body.data).toHaveProperty('database');
     expect(res.body.data.database).toHaveProperty('state');
     expect(res.body.data).toHaveProperty('system');
@@ -27,7 +27,7 @@ describe('Health & Metadata Endpoints', () => {
     const res = await request(app).get('/health');
     expect([200, 503]).toContain(res.statusCode);
     expect(res.body).toHaveProperty('data');
-    expect(res.body.data.service).toBe('Everest Textile OS API');
+    expect(res.body.data.service).toBe('FabricOps API');
   });
 
   it('GET /api/v1/non-existent-route should return structured 404 response', async () => {

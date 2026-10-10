@@ -7,6 +7,7 @@ import {
   getProductionPlanById,
   getPlanningOverview,
 } from '../services/planning.service.js';
+import { getAdminControlTowerOverview } from '../services/timeline.service.js';
 
 export const evaluateReadinessHandler = async (req, res, next) => {
   try {
@@ -123,6 +124,18 @@ export const getPlanningOverviewHandler = async (req, res, next) => {
     res.json({
       success: true,
       data: overview,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminControlTowerHandler = async (req, res, next) => {
+  try {
+    const data = await getAdminControlTowerOverview();
+    res.json({
+      success: true,
+      data,
     });
   } catch (error) {
     next(error);

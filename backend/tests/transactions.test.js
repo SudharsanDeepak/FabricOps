@@ -18,7 +18,7 @@ import {
   executeDispatchTransaction,
 } from '../src/services/transaction.service.js';
 
-describe('Everest Textile OS — Multi-Document ACID Transactions', () => {
+describe('FabricOps — Multi-Document ACID Transactions', () => {
   let replSet;
 
   beforeAll(async () => {

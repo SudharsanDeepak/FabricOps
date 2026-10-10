@@ -120,8 +120,8 @@ export const postThreadMessage = async (req, res, next) => {
       await createAndSendNotification({
         recipientId: access.customerId,
         recipientRole: 'CUSTOMER',
-        title: 'New Message from Everest Mills Admin',
-        message: `Everest Mills team: "${message.substring(0, 80)}..."`,
+        title: 'New Message from FabricOps Admin',
+        message: `FabricOps team: "${message.substring(0, 80)}..."`,
         type: 'MESSAGE_RECEIVED',
         actionUrl: `/my-quotes?id=${referenceId}`,
         metadata: { threadType, referenceId, messageId: newMessage._id },

@@ -17,7 +17,7 @@ const startServer = async () => {
 
     httpServer.listen(env.PORT, () => {
       logger.info(`=======================================================`);
-      logger.info(`  Everest Textile OS — Backend API Server Started`);
+      logger.info(`  FabricOps — Backend API Server Started`);
       logger.info(`  Mode:        ${env.NODE_ENV}`);
       logger.info(`  Port:        ${env.PORT}`);
       logger.info(`  HealthCheck: http://localhost:${env.PORT}/api/v1/health`);
@@ -31,7 +31,7 @@ const startServer = async () => {
 
 // Graceful shutdown handling
 const shutdown = async (signal) => {
-  logger.info(`Received ${signal}. Gracefully terminating Everest Textile OS...`);
+  logger.info(`Received ${signal}. Gracefully terminating FabricOps...`);
   httpServer.close(async () => {
     logger.info('HTTP server closed.');
     await disconnectDB();

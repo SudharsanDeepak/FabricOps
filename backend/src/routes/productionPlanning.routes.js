@@ -8,9 +8,13 @@ import {
   getPlansHandler,
   getPlanByIdHandler,
   getPlanningOverviewHandler,
+  getAdminControlTowerHandler,
 } from '../controllers/productionPlanning.controller.js';
 
 const router = Router();
+
+// Admin Production Control Tower (Active orders, progress, machine status, bottlenecks, delay risks)
+router.get('/control-tower', requireRoles('ADMIN'), getAdminControlTowerHandler);
 
 // Planning analytics (bottlenecks, conflicts, idle machines, delay risks)
 router.get('/overview', requireRoles('ADMIN', 'OPERATOR'), getPlanningOverviewHandler);

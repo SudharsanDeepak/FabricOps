@@ -123,7 +123,7 @@ export async function createQuotation({
     recipientId: customerId,
     recipientRole: 'CUSTOMER',
     title: 'New Fabric Quotation Issued',
-    message: `Everest Mills has issued Quotation ${quotation.quotationNumber} for ₹${totalAmount.toLocaleString()} with proposed delivery on ${finalDeliveryDate.toISOString().split('T')[0]}.`,
+    message: `FabricOps has issued Quotation ${quotation.quotationNumber} for ₹${totalAmount.toLocaleString()} with proposed delivery on ${finalDeliveryDate.toISOString().split('T')[0]}.`,
     type: 'QUOTATION_PROPOSED',
     actionUrl: `/my-quotes?id=${quotation._id}`,
     metadata: { quotationId: quotation._id, quotationNumber },

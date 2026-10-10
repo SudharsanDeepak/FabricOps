@@ -61,7 +61,7 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
               </span>
             </div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {role === 'ADMIN' && 'Everest Mills Executive Console'}
+              {role === 'ADMIN' && 'FabricOps Executive Console'}
               {role === 'CUSTOMER' && `Welcome, ${profile?.companyName || user?.name}`}
               {role === 'OPERATOR' && `Loom Operator Terminal — ${profile?.department || 'Weaving'} Shed`}
             </h1>
@@ -279,7 +279,7 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
             </div>
             <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Target Database:</span>
-              <span className="font-mono">everest_textile_os</span>
+              <span className="font-mono">{healthData?.database?.name || 'fabricops'}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-slate-500">ACID Transactions:</span>

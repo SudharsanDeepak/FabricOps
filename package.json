@@ -1,8 +1,8 @@
 {
-  "name": "everest-textile-os",
+  "name": "fabricops",
   "version": "1.0.0",
   "private": true,
-  "description": "Everest Textile OS — Textile Manufacturing Management System for Everest Textile Mills",
+  "description": "FabricOps — Textile Manufacturing Management Operating System",
   "workspaces": [
     "backend",
     "frontend"
@@ -25,7 +25,7 @@
     "loom-tracking",
     "odoo-alternative"
   ],
-  "author": "Everest Textile Mills Engineering Team",
+  "author": "FabricOps Engineering Team",
   "license": "UNLICENSED"
 }
 

@@ -61,7 +61,7 @@ export function FabricCatalogPage({ onNavigateSection }) {
               <Package className="h-3.5 w-3.5" /> Published Fabric Catalog
             </span>
             <h1 className="text-2xl font-bold tracking-tight">
-              Everest Mills Fabric Range & Specifications
+              FabricOps Range & Specifications
             </h1>
             <p className="mt-1 text-xs text-blue-100 max-w-2xl leading-relaxed">
               Explore our mill-woven combed poplin, organic chinos, and ring-spun denim lines. View real-time Available-to-Promise (ATP) stock, MOQ, shade cards, and indicative delivery lead times.

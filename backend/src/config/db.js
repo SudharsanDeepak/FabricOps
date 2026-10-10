@@ -1,3 +1,4 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import { env } from './env.js';
 import { logger } from './logger.js';
@@ -7,6 +8,13 @@ let isConnected = false;
 export const connectDB = async (retries = 3, delay = 2000) => {
   if (isConnected) {
     return mongoose.connection;
+  }
+
+  // Ensure resilient SRV lookup for cloud MongoDB Atlas clusters on Windows
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch (err) {
+    // ignore if restricted
   }
 
   const options = {
