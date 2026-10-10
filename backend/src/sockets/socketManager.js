@@ -68,12 +68,6 @@ export const initSocket = (httpServer) => {
     const userRole = socket.user?.role || 'UNAUTHENTICATED';
     logger.info(`Socket connected: ${socket.id} (${userName} [${userRole}])`);
 
-    // Auto-join personal user room and role room for targeted notifications
-    if (socket.user?._id) {
-      socket.join(`user:${socket.user._id}`);
-      socket.join(`role:${socket.user.role}`);
-    }
-
     // Authorized room subscription
     socket.on('join_room', async (roomName, callback) => {
       try {

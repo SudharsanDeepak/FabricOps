@@ -95,18 +95,6 @@ const orderSchema = new mongoose.Schema(
       enum: ['PENDING', 'PARTIAL', 'PAID'],
       default: 'PENDING',
     },
-    totalMetersOrdered: {
-      type: Number,
-      default: 0,
-    },
-    producedMeters: {
-      type: Number,
-      default: 0,
-    },
-    dispatchedMeters: {
-      type: Number,
-      default: 0,
-    },
     productionJobIds: [
       {
         type: mongoose.Schema.Types.ObjectId,

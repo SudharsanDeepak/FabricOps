@@ -64,26 +64,6 @@ const machineSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-    hourlyOperatingRate: {
-      type: Number,
-      default: 25.0,
-      min: 0,
-    },
-    powerRatingKw: {
-      type: Number,
-      default: 7.5,
-      min: 0,
-    },
-    downtimeHours: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    totalOutputMeters: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
   },
   {
     timestamps: true,

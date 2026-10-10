@@ -60,47 +60,6 @@ const fabricRollSchema = new mongoose.Schema(
       enum: ['UNGRADED', 'GRADE_A', 'GRADE_B', 'REJECT'],
       default: 'UNGRADED',
     },
-    inspectionStatus: {
-      type: String,
-      enum: ['PENDING', 'IN_INSPECTION', 'PASSED', 'FAILED', 'REWORK_REQUIRED', 'REJECTED'],
-      default: 'PENDING',
-    },
-    productionStage: {
-      type: String,
-      enum: ['SPINNING', 'WARPING', 'SIZING', 'WEAVING', 'DYEING', 'FINISHING', 'INSPECTION', 'PACKING'],
-      default: 'WEAVING',
-    },
-    rollType: {
-      type: String,
-      enum: ['FINAL_ROLL', 'INTERMEDIATE_DOFF_ROLL'],
-      default: 'FINAL_ROLL',
-    },
-    currentVerdict: {
-      type: String,
-      default: 'PENDING',
-    },
-    reworkCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    inspectionCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    latestInspectionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'QualityInspection',
-    },
-    productionRunId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'ProductionRun',
-    },
-    doffTimestamp: {
-      type: Date,
-      default: Date.now,
-    },
     status: {
       type: String,
       enum: [
@@ -115,7 +74,6 @@ const fabricRollSchema = new mongoose.Schema(
       ],
       default: 'GREY_OFF_LOOM',
     },
-    notes: String,
   },
   {
     timestamps: true,
@@ -123,9 +81,7 @@ const fabricRollSchema = new mongoose.Schema(
 );
 
 fabricRollSchema.index({ orderId: 1, status: 1 });
-fabricRollSchema.index({ orderId: 1, inspectionStatus: 1 });
 fabricRollSchema.index({ 'genealogy.yarnBatchNumbers': 1 });
-fabricRollSchema.index({ loomMachineId: 1 });
 
 export const FabricRoll = mongoose.model('FabricRoll', fabricRollSchema);
 
