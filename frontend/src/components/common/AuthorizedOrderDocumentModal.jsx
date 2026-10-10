@@ -23,6 +23,17 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
       .finally(() => setLoading(false));
   }, [orderId]);
 
+  // Keyboard Escape listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -30,17 +41,25 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
   if (!orderId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8">
-        {/* Top Modal Controls */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 print:hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 max-h-[92vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Sticky Modal Controls */}
+        <div className="sticky top-0 z-20 shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 print:hidden">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
               <Factory className="h-4 w-4" />
             </span>
             <div>
               <h3 className="text-sm font-bold text-slate-800">Authorized Order Confirmation Document</h3>
-              <p className="text-xs text-slate-500">Official contract document issued by FabricOps Limited</p>
+              <p className="text-xs text-slate-500">Official contract document & tax bill issued by FabricOps Limited</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -53,25 +72,37 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
               <Printer className="h-3.5 w-3.5" />
               <span>Print / Save PDF</span>
             </Button>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
+              className="gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-200 border-slate-300"
+              aria-label="Close document"
             >
-              <X className="h-5 w-5" />
-            </button>
+              <X className="h-4 w-4 text-slate-500" />
+              <span>Close</span>
+            </Button>
           </div>
         </div>
 
         {/* Document Content Area */}
-        <div className="p-8 sm:p-12 text-slate-900 print:p-0">
+        <div className="p-8 sm:p-12 text-slate-900 overflow-y-auto flex-1 print:p-0 print:overflow-visible">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500 text-sm">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <span>Generating Authorized Mill Certificate...</span>
+              <span>Generating Authorized Mill Certificate & Receipt...</span>
+              <Button variant="outline" size="sm" onClick={onClose} className="mt-2 text-xs">
+                Cancel
+              </Button>
             </div>
           ) : error ? (
-            <div className="p-6 text-center text-rose-600 text-sm font-medium">
-              {error}
+            <div className="p-8 text-center space-y-4">
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm font-medium">
+                {error}
+              </div>
+              <Button variant="outline" size="sm" onClick={onClose} className="text-xs">
+                Close
+              </Button>
             </div>
           ) : doc ? (
             <div className="space-y-8">
@@ -239,6 +270,34 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
               </div>
             </div>
           ) : null}
+        </div>
+
+        {/* Bottom Sticky Action Footer with Prominent Close Button */}
+        <div className="sticky bottom-0 z-20 shrink-0 px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>FabricOps Verified Digital Bill & Contract Ledger</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="gap-1.5 text-xs text-slate-700 hover:text-blue-600"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print / Save PDF</span>
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onClose}
+              className="gap-1.5 text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-xs"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span>Close Bill</span>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

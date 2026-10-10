@@ -79,7 +79,7 @@ function AppContent() {
     if (currentSection === 'my-quotes') {
       return <CustomerQuotesPage onNavigateSection={setCurrentSection} />;
     }
-    if (currentSection === 'my-orders') {
+    if (currentSection === 'my-orders' || currentSection === 'invoices') {
       return <CustomerOrdersPage onNavigateSection={setCurrentSection} />;
     }
 
@@ -90,7 +90,7 @@ function AppContent() {
     if (currentSection === 'quotations') {
       return <AdminQuotationsPage />;
     }
-    if (currentSection === 'orders') {
+    if (currentSection === 'orders' || currentSection === 'dispatch') {
       return <AdminOrdersPage />;
     }
     if (currentSection === 'inventory') {

@@ -143,6 +143,18 @@ export function AdminControlTowerPage({ onNavigateSection }) {
     }
   };
 
+  // Keyboard Escape listener to close modals
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setStageModal({ open: false, order: null });
+        setRecalcModal({ open: false, order: null });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const overview = data?.overview || {};
   const activeOrders = data?.activeOrders || [];
   const machineFleet = data?.machineFleet || {};
@@ -460,11 +472,25 @@ export function AdminControlTowerPage({ onNavigateSection }) {
 
       {/* Stage Advance Modal */}
       {stageModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setStageModal({ open: false, order: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
               <h3 className="font-bold text-sm">Advance Order Milestone Stage</h3>
-              <button onClick={() => setStageModal({ open: false, order: null })} className="text-slate-400 hover:text-white">
+              <button
+                type="button"
+                onClick={() => setStageModal({ open: false, order: null })}
+                className="text-slate-400 hover:text-white"
+                title="Close"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -538,11 +564,25 @@ export function AdminControlTowerPage({ onNavigateSection }) {
 
       {/* Dynamic Recalculate Modal */}
       {recalcModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setRecalcModal({ open: false, order: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 bg-amber-600 text-white flex justify-between items-center">
               <h3 className="font-bold text-sm">Recalculate Dynamic Delivery Estimates</h3>
-              <button onClick={() => setRecalcModal({ open: false, order: null })} className="text-amber-100 hover:text-white">
+              <button
+                type="button"
+                onClick={() => setRecalcModal({ open: false, order: null })}
+                className="text-amber-100 hover:text-white"
+                title="Close"
+                aria-label="Close"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>

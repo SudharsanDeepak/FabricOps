@@ -129,6 +129,20 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
     loadDashboard();
   }, [loadDashboard]);
 
+  // Escape key listener to close modals
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setProdLogModal({ open: false, job: null });
+        setBreakdownModal({ open: false, machineId: null });
+        setHandoverModal({ open: false, machineId: null });
+        setTransitionModal({ open: false, job: null, action: null });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Real-Time Socket.IO Synchronization
   useEffect(() => {
     const socket = getSocket();
@@ -1040,8 +1054,16 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
       {/* 5. Production Output Modal (Large Touch Controls & Touch Stepper) */}
       {prodLogModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setProdLogModal({ open: false, job: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-blue-400" />
@@ -1228,8 +1250,16 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
       {/* 6. Machine Breakdown & Needs Modal */}
       {breakdownModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setBreakdownModal({ open: false, machineId: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 bg-rose-600 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
@@ -1381,8 +1411,16 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
       {/* 7. Shift Handover Modal */}
       {handoverModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setHandoverModal({ open: false, machineId: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 bg-indigo-900 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-indigo-400" />
@@ -1527,8 +1565,16 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
       {/* 8. Task Transition Confirmation Modal */}
       {transitionModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setTransitionModal({ open: false, job: null, action: null })}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-bold ${

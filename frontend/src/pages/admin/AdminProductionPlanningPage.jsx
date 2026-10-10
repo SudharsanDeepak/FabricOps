@@ -17,6 +17,7 @@ import {
   Factory,
   Activity,
   History,
+  X,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -89,6 +90,18 @@ export function AdminProductionPlanningPage() {
   useEffect(() => {
     fetchPlanningData();
   }, [statusFilter]);
+
+  // Keyboard Escape listener to close modals
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowCreatePlanModal(false);
+        setShowRescheduleModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleOrderChange = async (orderId) => {
     setPlanForm((prev) => ({ ...prev, orderId }));
@@ -447,8 +460,16 @@ export function AdminProductionPlanningPage() {
 
       {/* MODAL 1: Schedule Production Plan */}
       {showCreatePlanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowCreatePlanModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -459,7 +480,15 @@ export function AdminProductionPlanningPage() {
                   <p className="text-xs text-slate-500">Material readiness evaluation & machine conflict detection</p>
                 </div>
               </div>
-              <button onClick={() => setShowCreatePlanModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowCreatePlanModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitCreatePlan} className="mt-4 space-y-4">
@@ -590,8 +619,16 @@ export function AdminProductionPlanningPage() {
 
       {/* MODAL 2: Authorized Rescheduling */}
       {showRescheduleModal && selectedPlanForReschedule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowRescheduleModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -602,7 +639,15 @@ export function AdminProductionPlanningPage() {
                   <p className="text-xs text-slate-500">Plan: {selectedPlanForReschedule.planNumber}</p>
                 </div>
               </div>
-              <button onClick={() => setShowRescheduleModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowRescheduleModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitReschedule} className="mt-4 space-y-3">

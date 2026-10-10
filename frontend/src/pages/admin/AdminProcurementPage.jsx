@@ -16,6 +16,7 @@ import {
   Check,
   Ban,
   Calendar,
+  X,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -96,6 +97,19 @@ export function AdminProcurementPage() {
   useEffect(() => {
     fetchProcurementData();
   }, [poStatusFilter, prStatusFilter]);
+
+  // Escape key handler to close any active modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedPoDetail(null);
+        setShowCreatePoModal(false);
+        setShowCreatePrModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleOpenCreatePo = (fromPr = null) => {
     setErrorMessage('');
@@ -682,8 +696,14 @@ export function AdminProcurementPage() {
 
       {/* MODAL 1: Create Purchase Order */}
       {showCreatePoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowCreatePoModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -694,7 +714,15 @@ export function AdminProcurementPage() {
                   <p className="text-xs text-slate-500">Commercial contract with authorized quantities and delivery commitments</p>
                 </div>
               </div>
-              <button onClick={() => setShowCreatePoModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowCreatePoModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitCreatePo} className="mt-4 space-y-4">
@@ -873,8 +901,14 @@ export function AdminProcurementPage() {
 
       {/* MODAL 2: Create Purchase Request (PRQ) */}
       {showCreatePrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowCreatePrModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -885,7 +919,15 @@ export function AdminProcurementPage() {
                   <p className="text-xs text-slate-500">Initiate procurement workflow for production shortages</p>
                 </div>
               </div>
-              <button onClick={() => setShowCreatePrModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowCreatePrModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitCreatePr} className="mt-4 space-y-3">
@@ -965,9 +1007,17 @@ export function AdminProcurementPage() {
 
       {/* MODAL 3: PO Details & Goods Receipts History */}
       {selectedPoDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedPoDetail(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
                   {selectedPoDetail.poNumber} — {selectedPoDetail.supplierId?.name}
@@ -976,11 +1026,22 @@ export function AdminProcurementPage() {
                   Total Value: ₹{selectedPoDetail.totalAmount.toLocaleString()} | Status: {selectedPoDetail.status}
                 </p>
               </div>
-              <button onClick={() => setSelectedPoDetail(null)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedPoDetail(null)}
+                  className="gap-1 text-xs text-slate-700 hover:text-slate-900 border-slate-300"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Close</span>
+                </Button>
+              </div>
             </div>
 
             {/* Line items */}
-            <div className="mt-4">
+            <div className="mt-4 flex-1">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Order Line Items</h4>
               <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg text-xs">
                 {selectedPoDetail.items.map((line) => (
@@ -1031,6 +1092,20 @@ export function AdminProcurementPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Prominent Footer Close Button */}
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-slate-400">Click outside, press Esc, or click button to close</span>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setSelectedPoDetail(null)}
+                className="bg-slate-900 hover:bg-slate-800 text-white gap-1.5 text-xs shadow-xs"
+              >
+                <X className="h-4 w-4" />
+                <span>Close Goods Receipts</span>
+              </Button>
             </div>
           </div>
         </div>

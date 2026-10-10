@@ -15,7 +15,8 @@ import {
   Calendar,
   Layers,
   ShieldCheck,
-  CornerDownRight
+  CornerDownRight,
+  X
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -169,6 +170,17 @@ export function CustomerQuotesPage({ onNavigateSection }) {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  // Keyboard Escape listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowCounterModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -548,11 +560,27 @@ export function CustomerQuotesPage({ onNavigateSection }) {
 
       {/* Counter-Offer Modal */}
       {showCounterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs"
+          onClick={() => setShowCounterModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-800">Submit Revision / Counter-Offer</h3>
-              <button onClick={() => setShowCounterModal(false)} className="text-slate-400 hover:text-slate-600">&times;</button>
+              <button
+                type="button"
+                onClick={() => setShowCounterModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
             <form onSubmit={handleSubmitCounterOffer} className="space-y-3 text-xs">

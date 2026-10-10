@@ -154,9 +154,28 @@ export function FeasibilityStudioModal({
     }
   };
 
+  // Keyboard Escape listener to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
           <div>
@@ -194,12 +213,16 @@ export function FeasibilityStudioModal({
                 2. Price & Terms Offer
               </button>
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              className="gap-1 text-xs text-slate-700 hover:text-slate-900 border-slate-300"
+              aria-label="Close"
             >
-              <X className="h-5 w-5" />
-            </button>
+              <X className="h-4 w-4" />
+              <span>Close</span>
+            </Button>
           </div>
         </div>
 
@@ -371,7 +394,15 @@ export function FeasibilityStudioModal({
                   ))}
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    className="text-xs"
+                  >
+                    Close Studio
+                  </Button>
                   <Button
                     type="button"
                     onClick={() => setActiveTab('quote')}
@@ -493,24 +524,35 @@ export function FeasibilityStudioModal({
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setActiveTab('feasibility')}
+                  onClick={onClose}
                   className="text-xs"
                 >
-                  &larr; Back to Feasibility
+                  Close Studio
                 </Button>
 
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5 px-5"
-                >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  <span>{quotationToRevise ? 'Issue Quotation Revision' : 'Issue Official Quotation'}</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab('feasibility')}
+                    className="text-xs"
+                  >
+                    &larr; Back to Feasibility
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1.5 px-5"
+                  >
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    <span>{quotationToRevise ? 'Issue Quotation Revision' : 'Issue Official Quotation'}</span>
+                  </Button>
+                </div>
               </div>
             </form>
           )}

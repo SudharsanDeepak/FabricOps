@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Loader2,
   FileText,
+  X,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -99,6 +100,20 @@ export function AdminInventoryPage() {
   useEffect(() => {
     fetchInventory();
   }, [categoryFilter, lowStockFilter, searchQuery]);
+
+  // Escape key handler to close any active modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowGrnModal(false);
+        setShowIssueModal(false);
+        setShowAdjustModal(false);
+        setSelectedItemDetail(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Load auxiliary data for modals
   const loadModalDependencies = async () => {
@@ -678,8 +693,16 @@ export function AdminInventoryPage() {
 
       {/* MODAL 1: Record Goods Receipt (GRN) */}
       {showGrnModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowGrnModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
@@ -690,7 +713,15 @@ export function AdminInventoryPage() {
                   <p className="text-xs text-slate-500">Atomic verification against Purchase Order with batch registration</p>
                 </div>
               </div>
-              <button onClick={() => setShowGrnModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowGrnModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitGrn} className="mt-4 space-y-4">
@@ -891,8 +922,14 @@ export function AdminInventoryPage() {
 
       {/* MODAL 2: Issue Material to Production */}
       {showIssueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowIssueModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -903,7 +940,15 @@ export function AdminInventoryPage() {
                   <p className="text-xs text-slate-500">Atomic stock deduction with reservation release</p>
                 </div>
               </div>
-              <button onClick={() => setShowIssueModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitIssueMaterial} className="mt-4 space-y-3">
@@ -986,8 +1031,14 @@ export function AdminInventoryPage() {
 
       {/* MODAL 3: Physical Audit Adjustment */}
       {showAdjustModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowAdjustModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -998,7 +1049,15 @@ export function AdminInventoryPage() {
                   <p className="text-xs text-slate-500">Authorized floor audit with bound protection</p>
                 </div>
               </div>
-              <button onClick={() => setShowAdjustModal(false)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <button
+                type="button"
+                onClick={() => setShowAdjustModal(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
             <form onSubmit={submitAdjustment} className="mt-4 space-y-3">
@@ -1067,18 +1126,35 @@ export function AdminInventoryPage() {
 
       {/* DRAWER / MODAL: Item Batches & History Detail */}
       {selectedItemDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedItemDetail(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-slate-900">{selectedItemDetail.sku} — {selectedItemDetail.name}</h3>
                 <p className="text-xs text-slate-500">Warehouse: {selectedItemDetail.warehouseLocation} | Unit Cost: ₹{selectedItemDetail.unitCost}</p>
               </div>
-              <button onClick={() => setSelectedItemDetail(null)} className="text-slate-400 hover:text-slate-700 font-bold text-lg">×</button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedItemDetail(null)}
+                className="gap-1 text-xs text-slate-700 hover:text-slate-900 border-slate-300"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+                <span>Close</span>
+              </Button>
             </div>
 
             {/* Yarn Batches */}
-            <div className="mt-4">
+            <div className="mt-4 flex-1">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Registered Batches</h4>
               {selectedItemDetail.batches?.length === 0 ? (
                 <p className="text-xs text-slate-400">No batch records registered for this SKU.</p>
@@ -1114,6 +1190,20 @@ export function AdminInventoryPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Prominent Footer Close Button */}
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-slate-400">Click outside, press Esc, or click button to close</span>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setSelectedItemDetail(null)}
+                className="bg-slate-900 hover:bg-slate-800 text-white gap-1.5 text-xs shadow-xs"
+              >
+                <X className="h-4 w-4" />
+                <span>Close Details</span>
+              </Button>
             </div>
           </div>
         </div>

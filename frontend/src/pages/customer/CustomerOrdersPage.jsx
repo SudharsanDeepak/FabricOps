@@ -255,15 +255,19 @@ export function CustomerOrdersPage({ onNavigateSection }) {
                       <span className="text-slate-400">
                         Committed: {new Date(order.confirmedDeliveryDate).toLocaleDateString()}
                       </span>
-                      {order.isAtRiskOfDelay ? (
-                        <span className="text-rose-600 font-semibold flex items-center gap-1 text-[10px]">
-                          <AlertTriangle className="h-3 w-3" /> Delay Risk
-                        </span>
-                      ) : (
-                        <span className="text-emerald-700 font-semibold flex items-center gap-1 text-[10px]">
-                          <ShieldCheck className="h-3 w-3" /> On Schedule
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedOrderId(order._id);
+                          setDocumentOrderId(order._id);
+                        }}
+                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                        title="Open Bill & Receipt"
+                      >
+                        <FileText className="h-3 w-3" />
+                        <span>Receipt & Bill</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -295,8 +299,8 @@ export function CustomerOrdersPage({ onNavigateSection }) {
                       onClick={() => setDocumentOrderId(selectedOrder._id)}
                       className="bg-slate-900 hover:bg-slate-800 text-white text-xs gap-1.5 shadow-sm"
                     >
-                      <Printer className="h-3.5 w-3.5" />
-                      <span>View Authorized Document</span>
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>View Invoice & Official Receipt</span>
                     </Button>
                   </div>
 

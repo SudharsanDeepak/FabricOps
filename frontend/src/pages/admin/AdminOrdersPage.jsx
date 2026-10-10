@@ -153,7 +153,7 @@ export function AdminOrdersPage() {
                       className="bg-slate-900 hover:bg-slate-800 text-white text-xs gap-1.5 shadow-xs"
                     >
                       <Printer className="h-3.5 w-3.5" />
-                      <span>Print Authorized Certificate</span>
+                      <span>View Authorized Bill & Certificate</span>
                     </Button>
                   </div>
 
