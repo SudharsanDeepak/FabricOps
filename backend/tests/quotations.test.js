@@ -70,7 +70,7 @@ describe('Prompt 4 — Customer Ordering & Quotation Negotiation Workflow', () =
     // Seed test users
     adminUser = await User.create({
       name: 'Mill General Manager',
-      email: 'admin.quote@everesttextiles.com',
+      email: 'admin.quote@fabricops.com',
       passwordHash: 'dummy-hash',
       role: 'ADMIN',
       status: 'ACTIVE',
@@ -188,7 +188,7 @@ describe('Prompt 4 — Customer Ordering & Quotation Negotiation Workflow', () =
       specificationDocuments: [
         {
           name: 'TechPack-Spring2026.pdf',
-          fileUrl: 'https://everestmills.s3.amazonaws.com/specs/techpack-01.pdf',
+          fileUrl: 'https://fabricops.s3.amazonaws.com/specs/techpack-01.pdf',
           fileType: 'application/pdf',
           fileSize: 204800,
         },
@@ -557,7 +557,7 @@ describe('Prompt 4 — Customer Ordering & Quotation Negotiation Workflow', () =
     expect(docRes.status).toBe(200);
     expect(docRes.body.success).toBe(true);
     expect(docRes.body.data.documentType).toBe('OFFICIAL_ORDER_CONFIRMATION');
-    expect(docRes.body.data.millDetails.companyName).toBe('Everest Textile Mills Limited');
+    expect(docRes.body.data.millDetails.companyName).toBe('FabricOps Limited');
     expect(docRes.body.data.buyerDetails.companyName).toBe('Apex Garments Pvt Ltd');
     expect(docRes.body.data.financials.totalAmount).toBe(294000);
     expect(docRes.body.data.millAuthorizedSignatory).toBeDefined();

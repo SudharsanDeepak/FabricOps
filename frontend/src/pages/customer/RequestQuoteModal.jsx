@@ -27,7 +27,7 @@ export function RequestQuoteModal({ product, onClose, onSuccess }) {
       if (docName) {
         documents.push({
           name: docName,
-          fileUrl: docUrl || 'https://everesttextiles.s3.amazonaws.com/uploads/customer-spec.pdf',
+          fileUrl: docUrl || 'https://fabricops.s3.amazonaws.com/uploads/customer-spec.pdf',
           fileType: 'application/pdf',
           fileSize: 102400,
         });

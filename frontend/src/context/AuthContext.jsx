@@ -83,9 +83,9 @@ export function AuthProvider({ children }) {
   // 1-Click Demo Login utility for development and evaluators
   const demoLogin = async (role) => {
     const credentials = {
-      ADMIN: { email: 'admin@everesttextiles.com', password: 'Everest@123456' },
-      CUSTOMER: { email: 'aditi@apexgarments.com', password: 'Everest@123456' },
-      OPERATOR: { email: 'rajesh.weaver@everesttextiles.com', password: 'Everest@123456' },
+      ADMIN: { email: 'admin@fabricops.com', password: 'FabricOps@123456' },
+      CUSTOMER: { email: 'aditi@apexgarments.com', password: 'FabricOps@123456' },
+      OPERATOR: { email: 'rajesh.weaver@fabricops.com', password: 'FabricOps@123456' },
     };
 
     const target = credentials[role] || credentials.ADMIN;

@@ -76,6 +76,7 @@ export function AppShell({ currentSection, onSectionChange, children }) {
   // Role-Specific Navigation items
   const adminNav = [
     { id: 'dashboard', label: 'Executive Dashboard', icon: BarChart3 },
+    { id: 'control-tower', label: 'Production Control Tower', icon: Activity, badge: 'Live Tower' },
     { id: 'quotations', label: 'Quotations & Pricing', icon: ClipboardList, badge: '3 Pending' },
     { id: 'orders', label: 'Sales Orders', icon: Layers },
     { id: 'inventory', label: 'Yarn & Stock Balances', icon: Package },
@@ -100,6 +101,7 @@ export function AppShell({ currentSection, onSectionChange, children }) {
 
   const operatorNav = [
     { id: 'my-machines', label: 'Assigned Looms / Frames', icon: Cpu, badge: 'Assigned' },
+    { id: 'task-board', label: 'Operator Task Board', icon: Layers, badge: 'Task Board' },
     { id: 'shift-log', label: 'Record Shift Production', icon: ClipboardList },
     { id: 'breakdowns', label: 'Report Machine Breakdown', icon: AlertCircle, badge: 'Alert' },
     { id: 'handover', label: 'Shift Handover Notes', icon: Users },
@@ -125,12 +127,12 @@ export function AppShell({ currentSection, onSectionChange, children }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold tracking-tight text-slate-900 text-base">Everest Textile OS</span>
+              <span className="font-bold tracking-tight text-slate-900 text-base">FabricOps</span>
               <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${roleThemeBadge[role] || 'bg-slate-100'}`}>
                 {role}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">Everest Textile Mills Manufacturing System</p>
+            <p className="text-xs text-slate-500 font-medium">FabricOps Manufacturing Operating System</p>
           </div>
         </div>
 

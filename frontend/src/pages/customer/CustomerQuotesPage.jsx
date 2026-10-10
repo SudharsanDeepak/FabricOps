@@ -118,7 +118,7 @@ export function CustomerQuotesPage({ onNavigateSection }) {
         },
       });
       setShowCounterModal(false);
-      setStatusMessage({ type: 'success', text: 'Counter-offer submitted to Everest Mills sales team!' });
+      setStatusMessage({ type: 'success', text: 'Counter-offer submitted to FabricOps sales team!' });
       await fetchData();
     } catch (err) {
       setStatusMessage({ type: 'error', text: err.message || 'Failed to submit counter-offer' });
@@ -177,7 +177,7 @@ export function CustomerQuotesPage({ onNavigateSection }) {
         <div>
           <h1 className="text-xl font-bold text-slate-900">My Quotations & Inquiries</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Review Everest Mills offers, negotiate pricing and timelines, review revision history, and confirm final orders.
+            Review FabricOps offers, negotiate pricing and timelines, review revision history, and confirm final orders.
           </p>
         </div>
 

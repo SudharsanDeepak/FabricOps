@@ -11,6 +11,7 @@ import {
   StockMovement,
   AuditLog,
 } from '../models/index.js';
+import { initializeOrderTimeline } from './timeline.service.js';
 
 /**
  * Execute a critical business operation inside a managed MongoDB transaction.
@@ -123,6 +124,9 @@ export async function confirmOrderTransaction({ quotationId, customerId, actorUs
       ],
       { session }
     );
+
+    // Initialize end-to-end timeline milestones
+    await initializeOrderTimeline(order._id, session);
 
     // 6. Record audit log
     await AuditLog.create(

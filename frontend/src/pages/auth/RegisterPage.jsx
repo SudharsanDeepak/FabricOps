@@ -106,7 +106,7 @@ export function RegisterPage({ onNavigateToLogin }) {
           </button>
           <div className="flex items-center gap-2">
             <Factory className="h-5 w-5 text-blue-500" />
-            <span className="text-xs font-bold tracking-tight text-white">Everest Textile Mills</span>
+            <span className="text-xs font-bold tracking-tight text-white">FabricOps</span>
           </div>
         </div>
 

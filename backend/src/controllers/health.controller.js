@@ -9,7 +9,7 @@ export const getHealth = (req, res) => {
   const isHealthy = dbStatus.isConnected;
 
   const healthData = {
-    service: 'Everest Textile OS API',
+    service: 'FabricOps API',
     status: isHealthy ? 'HEALTHY' : 'DEGRADED',
     timestamp: new Date().toISOString(),
     uptime: `${Math.floor(uptimeSeconds / 60)}m ${Math.floor(uptimeSeconds % 60)}s`,

@@ -1,6 +1,6 @@
-# Everest Textile OS
+# FabricOps
 
-**Manufacturing Operating System for Everest Textile Mills**
+**Textile Manufacturing Operating System**
 
 A unified, production-oriented monorepo platform designed to replace notebooks, phone calls, paper inspection slips, and manual registers across yarn procurement, weaving, quality control, dispatches, and operator accounting.
 

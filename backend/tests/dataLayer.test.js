@@ -13,7 +13,7 @@ import {
   Shift,
 } from '../src/models/index.js';
 
-describe('Everest Textile OS — Data Layer & Business Invariants', () => {
+describe('FabricOps — Data Layer & Business Invariants', () => {
   beforeAll(async () => {
     await connectTestDB();
   }, 120000); // Allow time for MongoMemoryServer download if needed

@@ -10,6 +10,7 @@ import notificationRoutes from './notification.routes.js';
 import inventoryRoutes from './inventory.routes.js';
 import procurementRoutes from './procurement.routes.js';
 import productionPlanningRoutes from './productionPlanning.routes.js';
+import operatorRoutes from './operator.routes.js';
 
 const router = Router();
 
@@ -46,11 +47,14 @@ router.use('/procurement', procurementRoutes);
 // Production Routing & Scheduling
 router.use('/production-planning', productionPlanningRoutes);
 
+// Factory Floor Operator Machine Dashboard & Terminals
+router.use('/operator', operatorRoutes);
+
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Welcome to Everest Textile OS API v1',
+    message: 'Welcome to FabricOps API v1',
     documentation: '/api/docs',
     endpoints: {
       health: '/api/v1/health',
@@ -64,6 +68,7 @@ router.get('/', (req, res) => {
       inventory: '/api/v1/inventory',
       procurement: '/api/v1/procurement',
       productionPlanning: '/api/v1/production-planning',
+      operator: '/api/v1/operator',
     },
   });
 });

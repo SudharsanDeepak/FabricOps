@@ -40,7 +40,7 @@ export class SimulatedAIQualityService extends AIQualityReportInterface {
         { defectType: 'Broken Pick', points: 2, positionMeter: 14.5, confidence: 0.95 },
         { defectType: 'Oil Stain', points: 4, positionMeter: 48.0, confidence: 0.91 },
       ],
-      aiModelVersion: 'everest-fabric-vision-v0.1-stub',
+      aiModelVersion: 'fabricops-vision-v0.1-stub',
       analyzedAt: new Date().toISOString(),
     };
   }

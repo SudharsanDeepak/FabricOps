@@ -13,6 +13,8 @@ import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminProcurementPage } from './pages/admin/AdminProcurementPage';
 import { AdminProductionPlanningPage } from './pages/admin/AdminProductionPlanningPage';
+import { AdminControlTowerPage } from './pages/admin/AdminControlTowerPage';
+import { OperatorDashboardPage } from './pages/operator/OperatorDashboardPage';
 import { Loader2, Factory } from 'lucide-react';
 
 function AppContent() {
@@ -29,7 +31,7 @@ function AppContent() {
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-300 font-medium">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-          <span>Verifying Everest Mill Sentinel Session...</span>
+          <span>Verifying FabricOps Sentinel Session...</span>
         </div>
       </div>
     );
@@ -47,6 +49,7 @@ function AppContent() {
   const isSectionPermitted = () => {
     const adminAllowed = [
       'dashboard',
+      'control-tower',
       'quotations',
       'orders',
       'inventory',
@@ -60,7 +63,7 @@ function AppContent() {
       'audits',
     ];
     const customerAllowed = ['catalog', 'request-quote', 'my-quotes', 'my-orders', 'invoices', 'profile'];
-    const operatorAllowed = ['my-machines', 'shift-log', 'breakdowns', 'handover', 'attendance'];
+    const operatorAllowed = ['my-machines', 'task-board', 'shift-log', 'breakdowns', 'handover', 'attendance'];
 
     if (role === 'ADMIN') return adminAllowed.includes(currentSection);
     if (role === 'CUSTOMER') return customerAllowed.includes(currentSection);
@@ -81,6 +84,9 @@ function AppContent() {
     }
 
     // Admin Sections
+    if (currentSection === 'control-tower') {
+      return <AdminControlTowerPage />;
+    }
     if (currentSection === 'quotations') {
       return <AdminQuotationsPage />;
     }
@@ -95,6 +101,24 @@ function AppContent() {
     }
     if (currentSection === 'planning') {
       return <AdminProductionPlanningPage />;
+    }
+
+    // Operator Sections
+    if (
+      role === 'OPERATOR' ||
+      currentSection === 'my-machines' ||
+      currentSection === 'task-board' ||
+      currentSection === 'shift-log' ||
+      currentSection === 'breakdowns' ||
+      currentSection === 'handover' ||
+      currentSection === 'attendance'
+    ) {
+      return (
+        <OperatorDashboardPage
+          activeTab={currentSection}
+          onNavigateSection={setCurrentSection}
+        />
+      );
     }
 
     // Default / Dashboard

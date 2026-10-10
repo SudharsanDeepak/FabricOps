@@ -40,7 +40,7 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
             </span>
             <div>
               <h3 className="text-sm font-bold text-slate-800">Authorized Order Confirmation Document</h3>
-              <p className="text-xs text-slate-500">Official contract document issued by Everest Textile Mills Limited</p>
+              <p className="text-xs text-slate-500">Official contract document issued by FabricOps Limited</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export function AuthorizedOrderDocumentModal({ orderId, onClose }) {
                   <div className="h-12 border-b border-dashed border-slate-400 mb-2 w-48 inline-block" />
                   <p className="font-bold text-slate-800">{doc.millAuthorizedSignatory.name}</p>
                   <p className="text-[11px] text-slate-500">{doc.millAuthorizedSignatory.designation}</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Everest Textile Mills Limited</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">FabricOps Limited</p>
                 </div>
               </div>
             </div>

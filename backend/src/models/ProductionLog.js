@@ -20,10 +20,22 @@ const productionLogSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order',
+      required: true,
+      index: true,
+    },
+    shiftId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Shift',
+      index: true,
+    },
     shift: {
       type: String,
       required: true,
       enum: ['MORNING', 'EVENING', 'NIGHT'],
+      index: true,
     },
     metersProduced: {
       type: Number,
@@ -44,6 +56,32 @@ const productionLogSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    downtimeMinutes: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    source: {
+      type: String,
+      enum: ['OPERATOR', 'IOT_SENSOR'],
+      default: 'OPERATOR',
+      index: true,
+    },
+    idempotencyKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
+    overrunAuthorized: {
+      type: Boolean,
+      default: false,
+    },
+    overrunReason: {
+      type: String,
+      trim: true,
+    },
     remarks: String,
     logDate: {
       type: Date,
@@ -58,7 +96,10 @@ const productionLogSchema = new mongoose.Schema(
 
 productionLogSchema.index({ jobId: 1, logDate: -1 });
 productionLogSchema.index({ machineId: 1, logDate: -1 });
+productionLogSchema.index({ orderId: 1, logDate: -1 });
 productionLogSchema.index({ operatorId: 1, logDate: -1 });
+productionLogSchema.index({ shift: 1, logDate: -1 });
+productionLogSchema.index({ shiftId: 1, logDate: -1 });
 
 export const ProductionLog = mongoose.model('ProductionLog', productionLogSchema);
 

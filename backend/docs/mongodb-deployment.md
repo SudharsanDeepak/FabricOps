@@ -1,5 +1,5 @@
 # MongoDB Deployment & Replica-Set Configuration Guide
-## Everest Textile OS — Manufacturing Operating System
+## FabricOps — Manufacturing Operating System
 
 ### 1. Replica Set Requirement for Multi-Document Transactions
 
@@ -26,7 +26,7 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:7.0
-    container_name: everest-mongo
+    container_name: fabricops-mongo
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     ports:
       - "27017:27017"
@@ -46,12 +46,12 @@ volumes:
 Start the container and initiate the replica set:
 ```bash
 docker compose up -d
-docker exec -it everest-mongo mongosh --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })"
+docker exec -it fabricops-mongo mongosh --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })"
 ```
 
 Connection URI for `.env`:
 ```env
-MONGODB_URI=mongodb://127.0.0.1:27017/everest_textile_os?replicaSet=rs0&retryWrites=true&w=majority
+MONGODB_URI=mongodb://127.0.0.1:27017/fabricops?replicaSet=rs0&retryWrites=true&w=majority
 ```
 
 #### Option B: Standalone mongod with Replica Set on Windows/Linux
@@ -82,7 +82,7 @@ For high availability and durability on factory networks:
 
 Production URI format:
 ```env
-MONGODB_URI=mongodb://everest-admin:SecurePass123@node1.internal:27017,node2.internal:27017,node3.internal:27017/everest_textile_os?replicaSet=everest-rs&ssl=true&authSource=admin&retryWrites=true&w=majority
+MONGODB_URI=mongodb://fabricops-admin:SecurePass123@node1.internal:27017,node2.internal:27017,node3.internal:27017/fabricops?replicaSet=fabricops-rs&ssl=true&authSource=admin&retryWrites=true&w=majority
 ```
 
 ---

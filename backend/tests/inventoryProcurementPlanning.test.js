@@ -73,7 +73,7 @@ describe('Prompt 5 — Admin Inventory, Procurement & Production Planning', () =
 
     adminUser = await User.create({
       name: 'Mill Ops Admin',
-      email: 'ops.admin@everesttextiles.com',
+      email: 'ops.admin@fabricops.com',
       passwordHash: 'dummyhashedpw123',
       role: 'ADMIN',
       status: 'ACTIVE',

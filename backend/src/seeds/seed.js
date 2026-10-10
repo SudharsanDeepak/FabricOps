@@ -24,10 +24,13 @@ import {
   Attendance,
   AuditLog,
   OrderMessage,
+  ProductionLog,
+  ShiftHandover,
+  BreakdownReport,
 } from '../models/index.js';
 
 export async function runSeed() {
-  logger.info('Starting Everest Textile OS Seed Process...');
+  logger.info('Starting FabricOps Seed Process...');
   await connectDB();
 
   // 1. Clear existing documents in development environment
@@ -84,12 +87,13 @@ export async function runSeed() {
   // 3. Seed Users & Profiles
   logger.info('Seeding Users & Profiles...');
   const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('Everest@123456', salt);
+  const passwordHash = await bcrypt.hash('FabricOps@123456', salt);
+  const everestPasswordHash = await bcrypt.hash('Everest@123456', salt);
 
-  const [adminUser, customerUser, operatorUser] = await User.insertMany([
+  const [adminUser, customerUser, operatorUser, legacyAdmin, legacyOperator] = await User.insertMany([
     {
       name: 'Prakash Sharma',
-      email: 'admin@everesttextiles.com',
+      email: 'admin@fabricops.com',
       passwordHash,
       role: 'ADMIN',
       phone: '+91 98410 11223',
@@ -105,8 +109,24 @@ export async function runSeed() {
     },
     {
       name: 'Rajesh Kumar',
-      email: 'rajesh.weaver@everesttextiles.com',
+      email: 'rajesh.weaver@fabricops.com',
       passwordHash,
+      role: 'OPERATOR',
+      phone: '+91 97100 55667',
+      status: 'ACTIVE',
+    },
+    {
+      name: 'Prakash Sharma (Everest Alias)',
+      email: 'admin@everesttextiles.com',
+      passwordHash: everestPasswordHash,
+      role: 'ADMIN',
+      phone: '+91 98410 11223',
+      status: 'ACTIVE',
+    },
+    {
+      name: 'Rajesh Kumar (Everest Alias)',
+      email: 'rajesh.weaver@everesttextiles.com',
+      passwordHash: everestPasswordHash,
       role: 'OPERATOR',
       phone: '+91 97100 55667',
       status: 'ACTIVE',
@@ -142,18 +162,32 @@ export async function runSeed() {
     },
   });
 
-  await OperatorProfile.create({
-    userId: operatorUser._id,
-    employeeCode: 'EMP-WEAV-042',
-    department: 'WEAVING',
-    skillLevel: 'MASTER_WEAVER',
-    hourlyWageRate: 180, // INR per hour
-    emergencyContact: {
-      name: 'Sunita Kumar',
-      relationship: 'Spouse',
-      phone: '+91 97100 88990',
+  await OperatorProfile.create([
+    {
+      userId: operatorUser._id,
+      employeeCode: 'EMP-WEAV-042',
+      department: 'WEAVING',
+      skillLevel: 'MASTER_WEAVER',
+      hourlyWageRate: 180, // INR per hour
+      emergencyContact: {
+        name: 'Sunita Kumar',
+        relationship: 'Spouse',
+        phone: '+91 97100 88990',
+      },
     },
-  });
+    {
+      userId: legacyOperator._id,
+      employeeCode: 'EMP-WEAV-043',
+      department: 'WEAVING',
+      skillLevel: 'MASTER_WEAVER',
+      hourlyWageRate: 180, // INR per hour
+      emergencyContact: {
+        name: 'Sunita Kumar',
+        relationship: 'Spouse',
+        phone: '+91 97100 88990',
+      },
+    },
+  ]);
 
   // 4. Seed Products
   logger.info('Seeding Fabric Catalog...');
@@ -394,6 +428,40 @@ export async function runSeed() {
     paymentStatus: 'PENDING',
   });
 
+  // Seed End-to-End Production Timeline Milestones
+  const { initializeOrderTimeline, updateTimelineStage } = await import('../services/timeline.service.js');
+  await initializeOrderTimeline(order._id);
+  await updateTimelineStage({
+    orderId: order._id,
+    stage: 'ORDER_CONFIRMATION',
+    status: 'COMPLETED',
+    completedQuantity: 5000,
+    actualCompletionDate: new Date(),
+  });
+  await updateTimelineStage({
+    orderId: order._id,
+    stage: 'MATERIAL_PROCUREMENT',
+    status: 'COMPLETED',
+    completedQuantity: 5000,
+    actualCompletionDate: new Date(),
+  });
+  await updateTimelineStage({
+    orderId: order._id,
+    stage: 'MATERIAL_ISSUANCE',
+    status: 'COMPLETED',
+    completedQuantity: 5000,
+    actualCompletionDate: new Date(),
+  });
+  await updateTimelineStage({
+    orderId: order._id,
+    stage: 'WEAVING',
+    status: 'IN_PROGRESS',
+    completedQuantity: 1200,
+    actualStartDate: new Date(),
+    responsibleMachineId: airJetLoom1._id,
+    responsibleTeam: 'Weaving Shed A',
+  });
+
   // 7b. Seed Active Customer Inquiry (PENDING_REVIEW)
   const pendingInquiry = await OrderRequest.create({
     requestNumber: 'REQ-2026-0031',
@@ -421,7 +489,7 @@ export async function runSeed() {
     specificationDocuments: [
       {
         name: 'TechPack_Chino_HeavyTwill_2026.pdf',
-        fileUrl: 'https://everesttextiles.internal/specs/TechPack_Chino_HeavyTwill.pdf',
+        fileUrl: 'https://fabricops.internal/specs/TechPack_Chino_HeavyTwill.pdf',
         fileType: 'application/pdf',
         fileSize: 345000,
       },
@@ -574,7 +642,7 @@ export async function runSeed() {
       attachments: [
         {
           name: 'TechPack_Chino_HeavyTwill_2026.pdf',
-          fileUrl: 'https://everesttextiles.internal/specs/TechPack_Chino_HeavyTwill.pdf',
+          fileUrl: 'https://fabricops.internal/specs/TechPack_Chino_HeavyTwill.pdf',
           fileType: 'application/pdf',
           fileSize: 345000,
         },
@@ -599,8 +667,7 @@ export async function runSeed() {
     actualStartDate: new Date(),
   });
 
-  order.productionJobIds.push(prodJob._id);
-  await order.save();
+  await Order.findByIdAndUpdate(order._id, { $push: { productionJobIds: prodJob._id } });
 
   // Create fabric rolls
   const roll01 = await FabricRoll.create({
@@ -660,6 +727,35 @@ export async function runSeed() {
     isActive: true,
   });
 
+  const eveningShift = await Shift.create({
+    shiftCode: 'SHIFT-EVENING',
+    name: 'EVENING',
+    startTime: '14:00',
+    endTime: '22:00',
+    durationHours: 8,
+    isActive: true,
+  });
+
+  const nightShift = await Shift.create({
+    shiftCode: 'SHIFT-NIGHT',
+    name: 'NIGHT',
+    startTime: '22:00',
+    endTime: '06:00',
+    durationHours: 8,
+    isActive: true,
+  });
+
+  // Assign machines to Operator Rajesh Kumar
+  await OperatorProfile.updateOne(
+    { userId: operatorUser._id },
+    { $set: { assignedMachines: [airJetLoom1._id, rapierLoom1._id] } }
+  );
+
+  // Link airJetLoom1 to active production job and operator
+  airJetLoom1.currentProductionJobId = prodJob._id;
+  airJetLoom1.currentOperatorId = operatorUser._id;
+  await airJetLoom1.save();
+
   const todayMidnight = new Date();
   todayMidnight.setUTCHours(0, 0, 0, 0);
 
@@ -672,6 +768,24 @@ export async function runSeed() {
     hoursWorked: 4,
     overtimeHours: 0,
     verifiedBy: adminUser._id,
+  });
+
+  // Seed sample initial production log
+  await ProductionLog.create({
+    jobId: prodJob._id,
+    orderId: order._id,
+    machineId: airJetLoom1._id,
+    operatorId: operatorUser._id,
+    shiftId: morningShift._id,
+    shift: 'MORNING',
+    metersProduced: 1200,
+    wasteMeters: 18,
+    durationMinutes: 240,
+    downtimeMinutes: 12,
+    source: 'OPERATOR',
+    idempotencyKey: 'SEED-PLOG-2026-001',
+    remarks: 'Morning run completed smoothly at 850 RPM with optimal warp tension',
+    logDate: new Date(Date.now() - 30 * 60 * 1000),
   });
 
   // 10. Audit Log
@@ -687,11 +801,11 @@ export async function runSeed() {
   });
 
   logger.info('===============================================================');
-  logger.info('  Everest Textile OS Database Seed Completed Successfully!');
+  logger.info('  FabricOps Database Seed Completed Successfully!');
   logger.info('  Demo Accounts:');
-  logger.info('  Admin:    admin@everesttextiles.com / Everest@123456');
-  logger.info('  Customer: aditi@apexgarments.com   / Everest@123456');
-  logger.info('  Operator: rajesh.weaver@everesttextiles.com / Everest@123456');
+  logger.info('  Admin:    admin@fabricops.com / FabricOps@123456');
+  logger.info('  Customer: aditi@apexgarments.com   / FabricOps@123456');
+  logger.info('  Operator: rajesh.weaver@fabricops.com / FabricOps@123456');
   logger.info('===============================================================');
 
   await disconnectDB();
