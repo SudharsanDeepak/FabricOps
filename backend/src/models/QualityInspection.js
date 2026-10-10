@@ -6,10 +6,8 @@ const defectSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        'Hole',
-        'Colour Mismatch',
-        'Uneven Weaving',
         'Slub',
+        'Hole',
         'Broken Pick',
         'Drop Stitch',
         'Stain',
@@ -17,9 +15,6 @@ const defectSchema = new mongoose.Schema(
         'Warp Float',
         'Weft Bar',
         'Coarse Yarn',
-        'Snag',
-        'Knot',
-        'Contamination',
         'Other',
       ],
     },
@@ -48,7 +43,6 @@ const defectSchema = new mongoose.Schema(
       default: 'MINOR',
     },
     imageUri: String,
-    notes: String,
   },
   { _id: true }
 );
@@ -66,13 +60,12 @@ const qualityInspectionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'FabricRoll',
       required: true,
-      index: true,
+      unique: true, // One inspection per roll
     },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order',
       required: true,
-      index: true,
     },
     inspectorId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -115,24 +108,6 @@ const qualityInspectionSchema = new mongoose.Schema(
       enum: ['PASSED', 'REWORK', 'SCRAP'],
       required: true,
     },
-    inspectionStatus: {
-      type: String,
-      enum: ['PENDING', 'PASSED', 'FAILED', 'REWORK_REQUIRED', 'REJECTED'],
-      default: 'PASSED',
-    },
-    inspectionCycle: {
-      type: Number,
-      default: 1,
-      min: 1,
-    },
-    isReinspection: {
-      type: Boolean,
-      default: false,
-    },
-    reworkEventId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'ReworkEvent',
-    },
     reworkInstructions: String,
     aiConfidenceScore: Number,
     inspectionDate: {
@@ -145,9 +120,7 @@ const qualityInspectionSchema = new mongoose.Schema(
   }
 );
 
-qualityInspectionSchema.index({ fabricRollId: 1, inspectionDate: -1 });
 qualityInspectionSchema.index({ orderId: 1, grade: 1 });
-qualityInspectionSchema.index({ inspectionStatus: 1 });
 
 /**
  * Pre-save hook: auto-computes 4-point penalty totals and standard fabric grading
@@ -163,21 +136,12 @@ qualityInspectionSchema.pre('validate', function (next) {
       if (this.pointsPer100SqMeters <= 20) {
         this.grade = 'GRADE_A';
         this.verdict = 'PASSED';
-        this.inspectionStatus = 'PASSED';
       } else if (this.pointsPer100SqMeters <= 28) {
         this.grade = 'GRADE_B';
         this.verdict = 'PASSED';
-        this.inspectionStatus = 'PASSED';
       } else {
         this.grade = 'REJECT';
-        // If rework instructions provided, flag as REWORK, otherwise SCRAP/REJECTED
-        if (this.verdict === 'REWORK' || this.inspectionStatus === 'REWORK_REQUIRED' || Boolean(this.reworkInstructions)) {
-          this.verdict = 'REWORK';
-          this.inspectionStatus = 'REWORK_REQUIRED';
-        } else {
-          this.verdict = 'SCRAP';
-          this.inspectionStatus = 'REJECTED';
-        }
+        this.verdict = 'SCRAP';
       }
     }
   }

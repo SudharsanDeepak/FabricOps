@@ -178,33 +178,18 @@ export async function executeDispatchTransaction({
       return { dispatch: existingDispatch, isDuplicate: true };
     }
 
-    // 2. Fetch and validate each fabric roll against quality standards
-    const allRolls = await FabricRoll.find({ _id: { $in: rollIds } }).session(session);
-    if (allRolls.length !== rollIds.length) {
-      throw new Error(`Dispatch aborted: One or more requested rolls were not found`);
-    }
+    // 2. Fetch and validate each fabric roll
+    const rolls = await FabricRoll.find({
+      _id: { $in: rollIds },
+      orderId,
+      status: { $in: ['GRADE_A', 'GRADE_B', 'PACKED_FOR_DISPATCH'] },
+    }).session(session);
 
-    for (const r of allRolls) {
-      if (r.orderId.toString() !== orderId.toString()) {
-        throw new Error(`Dispatch rejected: Roll ${r.rollNumber} belongs to a different order`);
-      }
-      if (
-        ['REWORK_REQUIRED', 'REJECTED_SCRAP'].includes(r.status) ||
-        r.inspectionStatus === 'REWORK_REQUIRED' ||
-        r.grade === 'REJECT'
-      ) {
-        throw new Error(
-          `Dispatch rejected: Roll ${r.rollNumber} failed quality inspection or requires rework (Grade: ${r.grade}, Status: ${r.status}). Cannot dispatch unapproved rolls.`
-        );
-      }
-      if (!['GRADE_A', 'GRADE_B', 'PACKED_FOR_DISPATCH'].includes(r.status)) {
-        throw new Error(
-          `Dispatch rejected: Roll ${r.rollNumber} is not approved for dispatch (Current status: ${r.status}). Only Grade A or Grade B passed rolls may be dispatched.`
-        );
-      }
+    if (rolls.length !== rollIds.length) {
+      throw new Error(
+        `Dispatch aborted: Expected ${rollIds.length} approved rolls, but only ${rolls.length} rolls are available for dispatch`
+      );
     }
-
-    const rolls = allRolls;
 
     const totalMeters = rolls.reduce((sum, r) => sum + r.netMeters, 0);
 

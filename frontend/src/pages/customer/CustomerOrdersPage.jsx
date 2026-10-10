@@ -17,9 +17,7 @@ import {
   Radio,
   Boxes,
   Compass,
-  ArrowRight,
-  Barcode,
-  X,
+  ArrowRight
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -37,11 +35,6 @@ export function CustomerOrdersPage({ onNavigateSection }) {
   const [loadingTimeline, setLoadingTimeline] = useState(false);
   const [documentOrderId, setDocumentOrderId] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [orderRolls, setOrderRolls] = useState([]);
-  const [loadingRolls, setLoadingRolls] = useState(false);
-  const [showTraceModal, setShowTraceModal] = useState(false);
-  const [traceData, setTraceData] = useState(null);
-  const [loadingTrace, setLoadingTrace] = useState(false);
 
   // Fetch list of confirmed orders
   const fetchOrders = useCallback(async () => {
@@ -80,38 +73,11 @@ export function CustomerOrdersPage({ onNavigateSection }) {
     }
   }, []);
 
-  const fetchOrderRolls = useCallback(async (orderId) => {
-    if (!orderId) return;
-    try {
-      setLoadingRolls(true);
-      const res = await api.get(`/quality/rolls?orderId=${orderId}`);
-      setOrderRolls(res.data || []);
-    } catch (err) {
-      console.error('Failed to load order rolls:', err);
-    } finally {
-      setLoadingRolls(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (selectedOrderId) {
       fetchTimeline(selectedOrderId);
-      fetchOrderRolls(selectedOrderId);
     }
-  }, [selectedOrderId, fetchTimeline, fetchOrderRolls]);
-
-  const handleViewTraceability = async (rollNumber) => {
-    try {
-      setShowTraceModal(true);
-      setLoadingTrace(true);
-      const res = await api.get(`/quality/rolls/${rollNumber}/traceability`);
-      setTraceData(res.data);
-    } catch (err) {
-      console.error('Failed to load roll traceability:', err);
-    } finally {
-      setLoadingTrace(false);
-    }
-  };
+  }, [selectedOrderId, fetchTimeline]);
 
   // Real-Time Socket.IO connection and room subscription for selected order
   useEffect(() => {
@@ -576,80 +542,6 @@ export function CustomerOrdersPage({ onNavigateSection }) {
                     </div>
                   )}
 
-                  {/* 3b. Produced Fabric Rolls & Traceability Genealogy Section */}
-                  <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Barcode className="h-5 w-5 text-blue-600" />
-                        <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
-                          Doffed Fabric Rolls & Traceability Certificates ({orderRolls.length})
-                        </h4>
-                      </div>
-                      <Badge variant="outline" className="text-[11px] font-normal">
-                        Individual Roll Genealogy
-                      </Badge>
-                    </div>
-
-                    {loadingRolls ? (
-                      <div className="py-4 text-center text-xs text-slate-400">
-                        Loading fabric rolls...
-                      </div>
-                    ) : orderRolls.length > 0 ? (
-                      <div className="divide-y divide-slate-100">
-                        {orderRolls.map((roll) => (
-                          <div
-                            key={roll._id}
-                            className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
-                          >
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-blue-600">
-                                  {roll.rollNumber}
-                                </span>
-                                <Badge
-                                  variant={
-                                    roll.grade === 'GRADE_A'
-                                      ? 'success'
-                                      : roll.grade === 'GRADE_B'
-                                      ? 'warning'
-                                      : roll.grade === 'REJECT'
-                                      ? 'destructive'
-                                      : 'secondary'
-                                  }
-                                  className="text-[10px]"
-                                >
-                                  {roll.grade}
-                                </Badge>
-                                {roll.inspectionCount > 1 && (
-                                  <Badge variant="outline" className="text-[10px]">
-                                    Cycle {roll.inspectionCount}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-slate-500">
-                                {roll.netMeters}m Net • {roll.widthInchesActual}" Width • Loom: {roll.loomMachineId?.machineCode || roll.genealogy?.loomCode || 'Loom'}
-                              </p>
-                            </div>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewTraceability(roll.rollNumber)}
-                              className="text-xs h-7 px-2.5 text-blue-700 hover:text-blue-900 border-blue-200 bg-blue-50/50"
-                            >
-                              <Barcode className="h-3.5 w-3.5 mr-1" />
-                              <span>View Traceability Certificate</span>
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic">
-                        Rolls will appear here once weaving doffing and 4-point inspection are logged.
-                      </p>
-                    )}
-                  </div>
-
                   {/* 4. Carrier Dispatch & Waybill Tracking Card */}
                   {timelineData?.dispatchDetails && (
                     <div className="bg-blue-50/50 rounded-xl border border-blue-200 p-4 space-y-3">
@@ -772,107 +664,6 @@ export function CustomerOrdersPage({ onNavigateSection }) {
           orderId={documentOrderId}
           onClose={() => setDocumentOrderId(null)}
         />
-      )}
-
-      {/* Customer Roll Traceability Certificate Modal */}
-      {showTraceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto">
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900 text-base">
-                    Fabric Roll Quality & Provenance Certificate
-                  </span>
-                  <Badge variant="outline" className="font-mono bg-blue-50 text-blue-700">
-                    {traceData?.roll?.rollNumber}
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Certified manufacturing provenance from raw yarn batch to finishing inspection.
-                </p>
-              </div>
-              <button onClick={() => setShowTraceModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-              {loadingTrace || !traceData ? (
-                <div className="py-16 text-center text-slate-400">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
-                  <span>Loading roll provenance...</span>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
-                    <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Roll Grade:</span>
-                      <span className="font-bold text-slate-900 text-sm">{traceData.roll?.grade}</span>
-                      <p className="text-slate-500 text-[11px]">ASTM D5430 Verified</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Net Length:</span>
-                      <span className="font-bold text-slate-900 text-sm">{traceData.roll?.netMeters} Meters</span>
-                      <p className="text-slate-500 text-[11px]">{traceData.roll?.widthInchesActual}" Width • {traceData.roll?.weightKg} kg</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Dispatch Clearance:</span>
-                      <span className="font-bold text-emerald-700 text-sm">
-                        {traceData.summary?.isEligibleForDispatch ? 'APPROVED FOR SHIPMENT' : 'INSPECTION PENDING'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="font-semibold text-slate-800 uppercase text-[10px] tracking-wider mb-2">
-                      Yarn Batch Provenance & Suppliers
-                    </h5>
-                    <div className="space-y-1.5">
-                      {traceData.yarnBatches?.length > 0 ? (
-                        traceData.yarnBatches.map((b) => (
-                          <div key={b._id} className="p-2.5 rounded bg-white border border-slate-200 flex justify-between">
-                            <div>
-                              <span className="font-mono font-bold text-blue-700">{b.batchNumber}</span>
-                              <p className="text-slate-500">Supplier: {b.supplierId?.name || 'Premier Mills'}</p>
-                            </div>
-                            <span className="text-slate-600">{b.inventoryItemId?.yarnType || 'Combed Cotton'}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-slate-400 italic">Batches: {traceData.roll?.genealogy?.yarnBatchNumbers?.join(', ') || 'LOT-CTN-DEFAULT'}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="font-semibold text-slate-800 uppercase text-[10px] tracking-wider mb-2">
-                      Quality Inspection Cycles ({traceData.inspections?.length || 0})
-                    </h5>
-                    <div className="space-y-2">
-                      {traceData.inspections?.map((i) => (
-                        <div key={i._id} className="p-2.5 rounded bg-white border border-slate-200 flex justify-between items-center">
-                          <div>
-                            <span className="font-bold text-slate-900">{i.inspectionNumber} (Cycle {i.inspectionCycle})</span>
-                            <p className="text-slate-500 text-[11px]">{new Date(i.inspectionDate).toLocaleString()}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-bold text-slate-900">{i.pointsPer100SqMeters} pts/100m²</span>
-                            <p className="text-emerald-700 font-semibold">{i.grade}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
-              <Button size="sm" onClick={() => setShowTraceModal(false)}>Close Certificate</Button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

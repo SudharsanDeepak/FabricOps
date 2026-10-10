@@ -11,16 +11,6 @@ import inventoryRoutes from './inventory.routes.js';
 import procurementRoutes from './procurement.routes.js';
 import productionPlanningRoutes from './productionPlanning.routes.js';
 import operatorRoutes from './operator.routes.js';
-import qualityRoutes from './quality.routes.js';
-import dispatchRoutes from './dispatch.routes.js';
-import analyticsRoutes from './analytics.routes.js';
-import {
-  attendanceRouter,
-  wageRouter,
-  costRouter,
-  supplierInvoiceRouter,
-  financialReportsRouter,
-} from './costingAndWages.routes.js';
 
 const router = Router();
 
@@ -59,31 +49,6 @@ router.use('/production-planning', productionPlanningRoutes);
 
 // Factory Floor Operator Machine Dashboard & Terminals
 router.use('/operator', operatorRoutes);
-
-// Quality Control & Fabric Roll Traceability
-router.use('/quality', qualityRoutes);
-
-// Finished Goods Inventory, Dispatch & Invoicing
-router.use('/dispatch', dispatchRoutes);
-router.use('/invoices', dispatchRoutes);
-
-// Attendance, Shift Management & Overtime Corrections
-router.use('/attendance', attendanceRouter);
-
-// Wage Statements, Payroll & Disbursements
-router.use('/wages', wageRouter);
-
-// Manufacturing Costing & Overhead Allocations
-router.use('/manufacturing-costs', costRouter);
-
-// Supplier Invoices & Payments
-router.use('/supplier-invoices', supplierInvoiceRouter);
-
-// Financial Reporting & 3-Way Reconciliation
-router.use('/financial-reports', financialReportsRouter);
-
-// Role Dashboards, KPI Aggregations & Analytics
-router.use('/analytics', analyticsRoutes);
 
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {

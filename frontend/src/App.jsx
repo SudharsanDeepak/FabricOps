@@ -14,10 +14,6 @@ import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
 import { AdminProcurementPage } from './pages/admin/AdminProcurementPage';
 import { AdminProductionPlanningPage } from './pages/admin/AdminProductionPlanningPage';
 import { AdminControlTowerPage } from './pages/admin/AdminControlTowerPage';
-import { AdminQualityControlPage } from './pages/admin/AdminQualityControlPage';
-import { AdminDispatchInvoicesPage } from './pages/admin/AdminDispatchInvoicesPage';
-import { AdminAttendanceWagesPage } from './pages/admin/AdminAttendanceWagesPage';
-import { CustomerInvoicesPage } from './pages/customer/CustomerInvoicesPage';
 import { OperatorDashboardPage } from './pages/operator/OperatorDashboardPage';
 import { Loader2, Factory } from 'lucide-react';
 
@@ -67,7 +63,7 @@ function AppContent() {
       'audits',
     ];
     const customerAllowed = ['catalog', 'request-quote', 'my-quotes', 'my-orders', 'invoices', 'profile'];
-    const operatorAllowed = ['my-machines', 'task-board', 'shift-log', 'breakdowns', 'handover', 'attendance', 'qc'];
+    const operatorAllowed = ['my-machines', 'task-board', 'shift-log', 'breakdowns', 'handover', 'attendance'];
 
     if (role === 'ADMIN') return adminAllowed.includes(currentSection);
     if (role === 'CUSTOMER') return customerAllowed.includes(currentSection);
@@ -86,20 +82,8 @@ function AppContent() {
     if (currentSection === 'my-orders') {
       return <CustomerOrdersPage onNavigateSection={setCurrentSection} />;
     }
-    if (currentSection === 'invoices') {
-      return <CustomerInvoicesPage onNavigateSection={setCurrentSection} />;
-    }
 
-    // Admin & Floor QC Sections
-    if (currentSection === 'qc') {
-      return <AdminQualityControlPage />;
-    }
-    if (currentSection === 'dispatch') {
-      return <AdminDispatchInvoicesPage />;
-    }
-    if (currentSection === 'attendance' && role === 'ADMIN') {
-      return <AdminAttendanceWagesPage />;
-    }
+    // Admin Sections
     if (currentSection === 'control-tower') {
       return <AdminControlTowerPage />;
     }
