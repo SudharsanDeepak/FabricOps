@@ -1,27 +1,29 @@
 import React, { useState } from 'react';
 import {
   Factory,
-  Shield,
-  UserCheck,
-  Cpu,
   LogIn,
   AlertCircle,
   Loader2,
-  Building,
-  KeyRound,
-  ArrowRight
+  Play,
+  Pause,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import AeroShards from '../../components/ui/AeroShards';
 
 export function LoginPage({ onNavigateToRegister }) {
-  const { login, demoLogin, error: authError } = useAuth();
+  const { login, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [shardFlow, setShardFlow] = useState('stream');
+  const [shardMaterial, setShardMaterial] = useState('pearl');
+  const [shardPaused, setShardPaused] = useState(false);
+  const [gpuAvailable, setGpuAvailable] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,28 +43,86 @@ export function LoginPage({ onNavigateToRegister }) {
     }
   };
 
-  const handleQuickDemo = async (role) => {
-    setLocalError('');
-    setLoading(true);
-    try {
-      await demoLogin(role);
-    } catch (err) {
-      setLocalError(err.message || `Failed to log in as ${role}. Please ensure database is seeded.`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const displayError = localError || authError;
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-      {/* Background Subtle Gradient & Grid Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 relative overflow-hidden select-none">
+      {/* Living WebGPU Procedural Shards / Yarn Filaments Background */}
+      <div className="absolute inset-0 z-0">
+        <AeroShards
+          backgroundColor="#070b14"
+          shardColor="#111c33"
+          accentColor="#3b82f6"
+          placement="full"
+          flow={shardFlow}
+          material={shardMaterial}
+          detail="balanced"
+          effect="none"
+          scale={1.05}
+          spread={1}
+          depth={1.25}
+          speed={0.8}
+          spin={0.85}
+          interaction="repel"
+          density={1.15}
+          shardSize={1.1}
+          stretch={1.1}
+          turbulence={0.4}
+          glow={1.2}
+          edgeSoftness={2}
+          bloom={1.1}
+          grain={0.04}
+          chromaticAberration={0.006}
+          transitionDuration={1.2}
+          interactionRadius={1.5}
+          interactionStrength={0.55}
+          rippleIntensity={1.2}
+          holdToGather
+          paused={shardPaused}
+          onError={() => setGpuAvailable(false)}
+        />
+      </div>
 
-      <div className="w-full max-w-md relative z-10 space-y-6">
+      {/* Subtle overlay gradients for depth */}
+      <div className="absolute inset-0 bg-radial-gradient pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.4)_0%,rgba(2,6,23,0.85)_100%)] z-[1]" />
+
+      <div className="w-full max-w-md relative z-10 space-y-4">
+        {/* Weave Simulator Interactive Bar */}
+        <div className="flex items-center justify-between px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-md shadow-lg text-[11px]">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <span className="font-semibold text-slate-300">Yarn Simulation:</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {(['stream', 'vortex', 'ribbon']).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setShardFlow(mode)}
+                className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                  shardFlow === mode
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShardPaused((p) => !p)}
+              title={shardPaused ? 'Resume Simulation' : 'Pause Simulation'}
+              className="ml-1 p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+            >
+              {shardPaused ? <Play className="h-3 w-3 text-emerald-400" /> : <Pause className="h-3 w-3" />}
+            </button>
+          </div>
+        </div>
         {/* Mill Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 mb-2">
@@ -139,74 +199,6 @@ export function LoginPage({ onNavigateToRegister }) {
                 )}
               </Button>
             </form>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-slate-900 px-2 text-slate-500 font-semibold tracking-wider">
-                  Or Fast Demo Sign In
-                </span>
-              </div>
-            </div>
-
-            {/* 1-Click Fast Demo Buttons */}
-            <div className="grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('ADMIN')}
-                disabled={loading}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 bg-slate-800/40 hover:bg-slate-800 hover:border-blue-500/50 text-left transition-all group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-md bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-200">Factory Supervisor (Admin)</p>
-                    <p className="text-[11px] text-slate-500">admin@fabricops.com</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('CUSTOMER')}
-                disabled={loading}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 bg-slate-800/40 hover:bg-slate-800 hover:border-emerald-500/50 text-left transition-all group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                    <Building className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-200">Apex Garments Ltd (Customer)</p>
-                    <p className="text-[11px] text-slate-500">aditi@apexgarments.com</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('OPERATOR')}
-                disabled={loading}
-                className="flex items-center justify-between p-2.5 rounded-lg border border-slate-800 bg-slate-800/40 hover:bg-slate-800 hover:border-purple-500/50 text-left transition-all group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-md bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                    <Cpu className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-200">Loom Master Rajesh (Operator)</p>
-                    <p className="text-[11px] text-slate-500">rajesh.weaver@fabricops.com</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all" />
-              </button>
-            </div>
           </CardContent>
 
           <CardFooter className="pt-0 flex flex-col space-y-2 border-t border-slate-800/80 p-6">
@@ -223,10 +215,16 @@ export function LoginPage({ onNavigateToRegister }) {
           </CardFooter>
         </Card>
 
-        {/* Security Notice */}
-        <p className="text-center text-[11px] text-slate-500">
-          Protected by FabricOps Sentinel. All sessions authenticated via HTTP-Only encrypted cookies.
-        </p>
+        {/* Security Notice & Interactive Hint */}
+        <div className="space-y-1 text-center">
+          <p className="text-[11px] text-slate-500">
+            Protected by FabricOps Sentinel. All sessions authenticated via HTTP-Only encrypted cookies.
+          </p>
+          <p className="text-[10px] text-slate-500 font-mono flex items-center justify-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-blue-400" />
+            <span>Interactive Shard Field: Hold click to gather filaments &bull; Move cursor to repel</span>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -17,12 +17,14 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { api } from '../../lib/api';
 import { RequestQuoteModal } from './RequestQuoteModal';
+import AeroShards from '../../components/ui/AeroShards';
 
 export function FabricCatalogPage({ onNavigateSection }) {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [catalogFlow, setCatalogFlow] = useState('ribbon');
   const [selectedProductForQuote, setSelectedProductForQuote] = useState(null);
   const [inquirySuccessBanner, setInquirySuccessBanner] = useState(false);
 
@@ -53,27 +55,83 @@ export function FabricCatalogPage({ onNavigateSection }) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Banner */}
-      <div className="rounded-xl bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-6 text-white shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+      {/* Dynamic WebGPU Textile Filament Banner */}
+      <div className="relative rounded-2xl bg-slate-950 border border-slate-800/80 p-6 text-white shadow-xl overflow-hidden group">
+        <div className="absolute inset-0 z-0 opacity-75 pointer-events-none">
+          <AeroShards
+            backgroundColor="#080e1e"
+            shardColor="#13233e"
+            accentColor="#06b6d4"
+            placement="full"
+            flow={catalogFlow}
+            material="satin"
+            detail="balanced"
+            effect="none"
+            scale={1.05}
+            spread={0.9}
+            depth={1.15}
+            speed={0.7}
+            spin={0.65}
+            interaction="repel"
+            density={1.05}
+            shardSize={1.0}
+            stretch={1.1}
+            turbulence={0.3}
+            glow={1.1}
+            edgeSoftness={2}
+            bloom={0.95}
+            grain={0.03}
+            chromaticAberration={0.005}
+            transitionDuration={1.1}
+            interactionRadius={1.4}
+            interactionStrength={0.5}
+            rippleIntensity={1.0}
+            holdToGather
+          />
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-transparent pointer-events-none z-[1]" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="max-w-2xl">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-900/80 border border-blue-400/40 px-2.5 py-0.5 text-xs text-blue-200 font-medium mb-2">
-              <Package className="h-3.5 w-3.5" /> Published Fabric Catalog
+              <Package className="h-3.5 w-3.5" /> Published Fabric Catalog &bull; CAD Simulation
             </span>
             <h1 className="text-2xl font-bold tracking-tight">
               FabricOps Range & Specifications
             </h1>
-            <p className="mt-1 text-xs text-blue-100 max-w-2xl leading-relaxed">
+            <p className="mt-1 text-xs text-slate-300 leading-relaxed">
               Explore our mill-woven combed poplin, organic chinos, and ring-spun denim lines. View real-time Available-to-Promise (ATP) stock, MOQ, shade cards, and indicative delivery lead times.
             </p>
           </div>
-          <Button
-            onClick={() => onNavigateSection('my-quotes')}
-            variant="outline"
-            className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs shrink-0"
-          >
-            Track My Inquiries & Quotes &rarr;
-          </Button>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 shrink-0">
+            {/* Quick Flow Picker */}
+            <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-800 p-1 rounded-lg backdrop-blur text-xs">
+              {(['ribbon', 'stream', 'vortex']).map((flow) => (
+                <button
+                  key={flow}
+                  type="button"
+                  onClick={() => setCatalogFlow(flow)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                    catalogFlow === flow
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {flow}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => onNavigateSection('my-quotes')}
+              variant="outline"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs shrink-0"
+            >
+              Track My Inquiries &rarr;
+            </Button>
+          </div>
         </div>
       </div>
 

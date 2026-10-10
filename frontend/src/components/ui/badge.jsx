@@ -10,9 +10,9 @@ const badgeVariants = {
   outline: 'text-slate-800 border-slate-300',
 };
 
-export function Badge({ className, variant = 'default', ...props }) {
+export function Badge({ className, variant = 'default', as: Component = 'span', ...props }) {
   return (
-    <div
+    <Component
       className={cn(
         'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors',
         badgeVariants[variant] || badgeVariants.default,

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
+import { resetSocket } from '../lib/socket';
 
 const AuthContext = createContext(null);
 
@@ -18,14 +19,17 @@ export function AuthProvider({ children }) {
       if (res.success && res.data?.user) {
         setUser(res.data.user);
         setProfile(res.data.profile || null);
+        resetSocket();
       } else {
         setUser(null);
         setProfile(null);
+        resetSocket();
       }
     } catch (err) {
       // 401 simply means not logged in
       setUser(null);
       setProfile(null);
+      resetSocket();
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +46,7 @@ export function AuthProvider({ children }) {
       const res = await api.post('/auth/login', { email, password });
       setUser(res.data.user);
       setProfile(res.data.profile || null);
+      resetSocket();
       return res.data;
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -58,6 +63,7 @@ export function AuthProvider({ children }) {
       const res = await api.post('/auth/register-customer', data);
       setUser(res.data.user);
       setProfile(res.data.profile || null);
+      resetSocket();
       return res.data;
     } catch (err) {
       setError(err.message || 'Registration failed.');
@@ -76,20 +82,9 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setProfile(null);
+      resetSocket();
       setIsLoading(false);
     }
-  };
-
-  // 1-Click Demo Login utility for development and evaluators
-  const demoLogin = async (role) => {
-    const credentials = {
-      ADMIN: { email: 'admin@fabricops.com', password: 'FabricOps@123456' },
-      CUSTOMER: { email: 'aditi@apexgarments.com', password: 'FabricOps@123456' },
-      OPERATOR: { email: 'rajesh.weaver@fabricops.com', password: 'FabricOps@123456' },
-    };
-
-    const target = credentials[role] || credentials.ADMIN;
-    return login(target.email, target.password);
   };
 
   const value = {
@@ -102,7 +97,6 @@ export function AuthProvider({ children }) {
     login,
     registerCustomer,
     logout,
-    demoLogin,
     refreshUser: checkSession,
   };
 
