@@ -1,0 +1,31 @@
+{
+  "name": "everest-textile-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Everest Textile OS — Textile Manufacturing Management System for Everest Textile Mills",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=backend & npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "test": "npm run test --workspace=backend",
+    "seed": "npm run seed --workspace=backend",
+    "migrate:indexes": "npm run migrate:indexes --workspace=backend"
+  },
+  "keywords": [
+    "textile",
+    "manufacturing",
+    "erp",
+    "mes",
+    "loom-tracking",
+    "odoo-alternative"
+  ],
+  "author": "Everest Textile Mills Engineering Team",
+  "license": "UNLICENSED"
+}
+
