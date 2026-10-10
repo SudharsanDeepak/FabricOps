@@ -77,30 +77,47 @@ export const initSocket = (httpServer) => {
     // Authorized room subscription
     socket.on('join_room', async (roomName, callback) => {
       try {
-        if (!roomName || typeof roomName !== 'string') {
+        const targetRoom = typeof roomName === 'string' ? roomName : roomName?.room;
+        if (!targetRoom || typeof targetRoom !== 'string') {
           if (typeof callback === 'function') callback({ success: false, error: 'Invalid room name' });
           return;
         }
 
+        // Self-heal: if socket.user was not resolved during initial handshake, re-check handshake cookie
+        if (!socket.user) {
+          const token = extractToken(socket.handshake);
+          if (token) {
+            try {
+              const decoded = jwt.verify(token, env.JWT_SECRET);
+              const user = await User.findById(decoded.id).select('-passwordHash').lean();
+              if (user && user.status === 'ACTIVE') {
+                socket.user = user;
+              }
+            } catch (jwtErr) {
+              // invalid or expired token
+            }
+          }
+        }
+
         // Room Authorization Rules
-        if (roomName === 'admin_control_tower') {
+        if (targetRoom === 'admin_control_tower') {
           if (!socket.user || socket.user.role !== 'ADMIN') {
             logger.warn(`Unauthorized room join attempt on 'admin_control_tower' by socket ${socket.id}`);
-            socket.emit('subscription_error', { room: roomName, message: 'Access denied: Admin role required' });
+            socket.emit('subscription_error', { room: targetRoom, message: 'Access denied: Admin role required' });
             if (typeof callback === 'function') callback({ success: false, error: 'Access denied: Admin role required' });
             return;
           }
-        } else if (roomName === 'operator_floor') {
+        } else if (targetRoom === 'operator_floor') {
           if (!socket.user || (socket.user.role !== 'ADMIN' && socket.user.role !== 'OPERATOR')) {
             logger.warn(`Unauthorized room join attempt on 'operator_floor' by socket ${socket.id}`);
-            socket.emit('subscription_error', { room: roomName, message: 'Access denied: Operator or Admin role required' });
+            socket.emit('subscription_error', { room: targetRoom, message: 'Access denied: Operator or Admin role required' });
             if (typeof callback === 'function') callback({ success: false, error: 'Access denied: Operator or Admin role required' });
             return;
           }
-        } else if (roomName.startsWith('order:')) {
-          const orderId = roomName.split(':')[1];
+        } else if (targetRoom.startsWith('order:')) {
+          const orderId = targetRoom.split(':')[1];
           if (!socket.user) {
-            socket.emit('subscription_error', { room: roomName, message: 'Authentication required to subscribe to order updates' });
+            socket.emit('subscription_error', { room: targetRoom, message: 'Authentication required to subscribe to order updates' });
             if (typeof callback === 'function') callback({ success: false, error: 'Authentication required' });
             return;
           }
@@ -109,34 +126,37 @@ export const initSocket = (httpServer) => {
           if (socket.user.role === 'CUSTOMER') {
             const order = await Order.findById(orderId).select('customerId').lean();
             if (!order || order.customerId.toString() !== socket.user._id.toString()) {
-              logger.warn(`Customer ${socket.user._id} attempted unauthorized subscription to ${roomName}`);
-              socket.emit('subscription_error', { room: roomName, message: 'Cross-customer access denied' });
+              logger.warn(`Customer ${socket.user._id} attempted unauthorized subscription to ${targetRoom}`);
+              socket.emit('subscription_error', { room: targetRoom, message: 'Cross-customer access denied' });
               if (typeof callback === 'function') callback({ success: false, error: 'Cross-customer access denied' });
               return;
             }
           }
-        } else if (roomName.startsWith('customer:')) {
-          const customerId = roomName.split(':')[1];
+        } else if (targetRoom.startsWith('customer:')) {
+          const customerId = targetRoom.split(':')[1];
           if (!socket.user || (socket.user.role !== 'ADMIN' && socket.user._id.toString() !== customerId)) {
-            socket.emit('subscription_error', { room: roomName, message: 'Unauthorized customer channel' });
+            socket.emit('subscription_error', { room: targetRoom, message: 'Unauthorized customer channel' });
             if (typeof callback === 'function') callback({ success: false, error: 'Unauthorized customer channel' });
             return;
           }
         }
 
         // Authorized: Join room
-        socket.join(roomName);
-        logger.info(`Socket ${socket.id} (${userName}) authorized and joined room: ${roomName}`);
-        if (typeof callback === 'function') callback({ success: true, room: roomName });
+        socket.join(targetRoom);
+        logger.info(`Socket ${socket.id} (${userName}) authorized and joined room: ${targetRoom}`);
+        if (typeof callback === 'function') callback({ success: true, room: targetRoom });
       } catch (err) {
-        logger.error(`Error joining room ${roomName}: ${err.message}`);
+        logger.error(`Error joining room: ${err.message}`);
         if (typeof callback === 'function') callback({ success: false, error: 'Internal subscription error' });
       }
     });
 
     socket.on('leave_room', (roomName) => {
-      socket.leave(roomName);
-      logger.info(`Socket ${socket.id} left room: ${roomName}`);
+      const targetRoom = typeof roomName === 'string' ? roomName : roomName?.room;
+      if (targetRoom) {
+        socket.leave(targetRoom);
+        logger.info(`Socket ${socket.id} left room: ${targetRoom}`);
+      }
     });
 
     // Reconcile client state after network reconnection

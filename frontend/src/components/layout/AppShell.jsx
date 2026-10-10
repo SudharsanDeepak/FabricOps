@@ -30,13 +30,12 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 export function AppShell({ currentSection, onSectionChange, children }) {
-  const { user, profile, role, logout, demoLogin } = useAuth();
+  const { user, profile, role, logout } = useAuth();
   const [healthStatus, setHealthStatus] = useState({
     loading: true,
     healthy: false,
     data: null,
   });
-  const [switchLoading, setSwitchLoading] = useState(false);
 
   const checkHealth = async () => {
     try {
@@ -61,18 +60,6 @@ export function AppShell({ currentSection, onSectionChange, children }) {
     const interval = setInterval(checkHealth, 30000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleRoleSwitch = async (targetRole) => {
-    setSwitchLoading(true);
-    try {
-      await demoLogin(targetRole);
-      if (targetRole === 'ADMIN') onSectionChange('dashboard');
-      if (targetRole === 'CUSTOMER') onSectionChange('catalog');
-      if (targetRole === 'OPERATOR') onSectionChange('my-machines');
-    } finally {
-      setSwitchLoading(false);
-    }
-  };
 
   // Role-Specific Navigation items
   const adminNav = [
@@ -136,25 +123,6 @@ export function AppShell({ currentSection, onSectionChange, children }) {
             </div>
             <p className="text-xs text-slate-500 font-medium">FabricOps Manufacturing Operating System</p>
           </div>
-        </div>
-
-        {/* Fast Role Simulator / Switcher for Evaluators */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200/80">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase px-2 tracking-wider">Fast Role Switch:</span>
-          {(['ADMIN', 'CUSTOMER', 'OPERATOR']).map((r) => (
-            <button
-              key={r}
-              disabled={switchLoading}
-              onClick={() => handleRoleSwitch(r)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
-                role === r
-                  ? 'bg-white text-blue-700 shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
         </div>
 
         {/* User Info & Telemetry */}
