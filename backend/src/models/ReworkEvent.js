@@ -76,7 +76,6 @@ const reworkEventSchema = new mongoose.Schema(
 );
 
 reworkEventSchema.index({ fabricRollId: 1, createdAt: -1 });
-reworkEventSchema.index({ status: 1 });
 
 export const ReworkEvent = mongoose.model('ReworkEvent', reworkEventSchema);
 

@@ -396,10 +396,12 @@ export async function recordInspection({
         { fabricRollId: roll._id },
         {
           fabricRollId: roll._id,
+          rollNumber: roll.rollNumber,
           orderId: roll.orderId,
-          productId: roll.orderId?.productId || roll._id,
+          productName: 'Approved Woven Fabric',
           grade,
           netMeters: roll.netMeters,
+          weightKg: roll.weightKg || 25,
           warehouseLocation: 'FG-WAREHOUSE-A',
           isAllocatedToDispatch: false,
         },

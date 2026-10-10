@@ -171,7 +171,7 @@ qualityInspectionSchema.pre('validate', function (next) {
       } else {
         this.grade = 'REJECT';
         // If rework instructions provided, flag as REWORK, otherwise SCRAP/REJECTED
-        if (this.verdict === 'REWORK' || this.inspectionStatus === 'REWORK_REQUIRED') {
+        if (this.verdict === 'REWORK' || this.inspectionStatus === 'REWORK_REQUIRED' || Boolean(this.reworkInstructions)) {
           this.verdict = 'REWORK';
           this.inspectionStatus = 'REWORK_REQUIRED';
         } else {

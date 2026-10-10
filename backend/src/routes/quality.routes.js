@@ -12,9 +12,13 @@ import {
   getQualityDashboardHandler,
   getReworkQueueHandler,
   getAiDefectsHandler,
+  getQualityMachinesHandler,
 } from '../controllers/quality.controller.js';
 
 const router = Router();
+
+// Machine fleet for roll allocation & inspection
+router.get('/machines', requireRoles('ADMIN', 'OPERATOR'), getQualityMachinesHandler);
 
 // Quality KPIs & Defect Dashboard
 router.get('/dashboard', requireRoles('ADMIN', 'OPERATOR'), getQualityDashboardHandler);

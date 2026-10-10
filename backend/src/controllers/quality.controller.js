@@ -9,7 +9,7 @@ import {
   verifyDefectObservation,
   getQualityDashboardMetrics,
 } from '../services/quality.service.js';
-import { DefectObservation, ReworkEvent } from '../models/index.js';
+import { DefectObservation, ReworkEvent, Machine } from '../models/index.js';
 
 export const createRollHandler = async (req, res, next) => {
   try {
@@ -205,6 +205,21 @@ export const getAiDefectsHandler = async (req, res, next) => {
       success: true,
       data: defects,
       count: defects.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getQualityMachinesHandler = async (req, res, next) => {
+  try {
+    const machines = await Machine.find({ isDeleted: { $ne: true } })
+      .select('machineCode name type status department')
+      .sort({ machineCode: 1 })
+      .lean();
+    res.json({
+      success: true,
+      data: machines,
     });
   } catch (error) {
     next(error);
