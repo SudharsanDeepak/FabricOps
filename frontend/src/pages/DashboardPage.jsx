@@ -11,14 +11,25 @@ import {
   FileCode2,
   Workflow,
   Sparkles,
-  Info
+  Info,
+  Building,
+  User,
+  CreditCard,
+  AlertTriangle,
+  Play,
+  Pause,
+  Clock,
+  CheckCircle2,
+  PackageCheck
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
-export function DashboardPage({ activeRole, currentSection }) {
+export function DashboardPage({ currentSection, onNavigateSection }) {
+  const { user, profile, role } = useAuth();
   const [healthData, setHealthData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,16 +52,23 @@ export function DashboardPage({ activeRole, currentSection }) {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="text-white border-blue-400 bg-blue-600/50 text-xs">
-                Active Perspective: {activeRole}
-              </Badge>
-              <Badge variant="outline" className="text-white border-blue-400 bg-blue-600/50 text-xs">
-                Section: {currentSection}
-              </Badge>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-900/80 border border-blue-400/40 px-2.5 py-0.5 text-xs text-blue-200 font-medium">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                Verified Session &bull; {role}
+              </span>
+              <span className="text-xs text-blue-200">
+                Logged in as <strong>{user?.name}</strong>
+              </span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Everest Textile OS</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {role === 'ADMIN' && 'Everest Mills Executive Console'}
+              {role === 'CUSTOMER' && `Welcome, ${profile?.companyName || user?.name}`}
+              {role === 'OPERATOR' && `Loom Operator Terminal — ${profile?.department || 'Weaving'} Shed`}
+            </h1>
             <p className="mt-1 text-sm text-blue-100 max-w-2xl">
-              Unified Manufacturing Operating System replacing paper slips, telephone registers, and manual tracking for Everest Textile Mills.
+              {role === 'ADMIN' && 'Real-time orchestration of yarn inventory, loom capacity, quality scoring, dispatches, and operator wages.'}
+              {role === 'CUSTOMER' && 'Monitor your custom woven fabrics, review quotes, track roll production stages, and download tax invoices.'}
+              {role === 'OPERATOR' && 'View assigned loom machines, log shift production meters, and report mechanical breakdown halts.'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -62,7 +80,129 @@ export function DashboardPage({ activeRole, currentSection }) {
         </div>
       </div>
 
-      {/* Subsystem Architecture Grid */}
+      {/* Role-Specific Live Console */}
+      {role === 'ADMIN' && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Active Looms Running</CardDescription>
+              <CardTitle className="text-2xl font-bold text-slate-800">18 / 20</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-emerald-600 flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5" /> 94.2% Fleet Efficiency
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Pending Quotations</CardDescription>
+              <CardTitle className="text-2xl font-bold text-amber-600">3 Inquiries</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500">
+              Avg review time: 4.2 hours
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Daily Woven Output</CardDescription>
+              <CardTitle className="text-2xl font-bold text-blue-600">14,850 m</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500">
+              Target: 15,000 m (99%)
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">4-Point QC Pass Rate</CardDescription>
+              <CardTitle className="text-2xl font-bold text-emerald-600">97.8%</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500">
+              Grade A: 93% &bull; Grade B: 4.8%
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {role === 'CUSTOMER' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="text-xs">Credit & Payment Terms</CardDescription>
+                <Badge variant="outline" className="text-xs">Net 30</Badge>
+              </div>
+              <CardTitle className="text-xl font-bold text-slate-800">₹{(profile?.creditLimit || 500000).toLocaleString()}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500">
+              Credit Limit Available &bull; Tax ID: {profile?.taxId || 'Registered'}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Active Production Order</CardDescription>
+              <CardTitle className="text-xl font-bold text-blue-600">ORD-2026-0018</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-600">
+              5,000m Combed Cotton Poplin &bull; Stage: <strong className="text-blue-700">Weaving (24%)</strong>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Shipping Destination</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-800 truncate">
+                {profile?.shippingAddress?.city || 'Sriperumbudur'}, {profile?.shippingAddress?.state || 'Tamil Nadu'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500">
+              Direct dispatch with transit pass and digital invoice.
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {role === 'OPERATOR' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-blue-200 bg-blue-50/40">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="text-xs font-semibold text-blue-700">Assigned Loom Station</CardDescription>
+                <Badge variant="success">RUNNING</Badge>
+              </div>
+              <CardTitle className="text-xl font-bold text-slate-900">LOOM-AJ-01 (Air-Jet)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-600 space-y-1">
+              <div>Shed 1 &bull; Bay 104 &bull; Reed Space 75"</div>
+              <div className="font-mono text-blue-700 font-semibold">Speed: 850 RPM &bull; 820 Picks/Min</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Current Shift Target</CardDescription>
+              <CardTitle className="text-xl font-bold text-slate-800">420 / 600 Meters</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-600">
+              Progress: 70% &bull; Waste: 1.2% (Well within standard)
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="p-4 pb-2">
+              <CardDescription className="text-xs">Shift Timings & Base Rate</CardDescription>
+              <CardTitle className="text-xl font-bold text-purple-700">₹{(profile?.hourlyWageRate || 180)} / hr</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-600">
+              Morning Shift (06:00 - 14:00) &bull; Incentive Bonus Active
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Subsystem Health Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* API Core */}
         <Card>
@@ -75,17 +215,17 @@ export function DashboardPage({ activeRole, currentSection }) {
               <Badge variant="success">Active</Badge>
             </div>
             <CardDescription className="text-xs">
-              Port: 5000 &bull; Modular MVC & Services
+              Port: 5000 &bull; Modular MVC & RBAC
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 space-y-1.5">
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Uptime:</span>
-              <span className="font-mono">{healthData?.uptime || 'Starting...'}</span>
+              <span className="text-slate-500">Session Auth:</span>
+              <span className="font-semibold text-emerald-700">HTTP-Only JWT Cookie</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Node Runtime:</span>
-              <span className="font-mono">{healthData?.system?.nodeVersion || process.version || 'v22'}</span>
+              <span className="text-slate-500">Server Uptime:</span>
+              <span className="font-mono">{healthData?.uptime || 'Starting...'}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-slate-500">Health Endpoint:</span>
@@ -107,12 +247,12 @@ export function DashboardPage({ activeRole, currentSection }) {
               </Badge>
             </div>
             <CardDescription className="text-xs">
-              ODM Layer with Transactions & Auditing
+              All 9 Collections & Schemas Active
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 space-y-1.5">
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Connection:</span>
+              <span className="text-slate-500">Connection State:</span>
               <span className="font-semibold text-slate-700 capitalize">
                 {healthData?.database?.state || 'Awaiting Mongo'}
               </span>
@@ -122,8 +262,8 @@ export function DashboardPage({ activeRole, currentSection }) {
               <span className="font-mono">everest_textile_os</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-slate-500">Replica Set Mode:</span>
-              <span>Enabled in URI / Dev fallback</span>
+              <span className="text-slate-500">ACID Transactions:</span>
+              <span className="text-emerald-700 font-medium">Replica-Set Supported</span>
             </div>
           </CardContent>
         </Card>
@@ -134,86 +274,30 @@ export function DashboardPage({ activeRole, currentSection }) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Cpu className="h-4 w-4 text-purple-600" />
-                IoT & AI Adapters
+                Security & RBAC Layer
               </CardTitle>
-              <Badge variant="secondary">Stubs Ready</Badge>
+              <Badge variant="success">Enforced</Badge>
             </div>
             <CardDescription className="text-xs">
-              Pluggable hardware & vision interfaces
+              Server-Side Isolation & Audit Logging
             </CardDescription>
           </CardHeader>
           <CardContent className="text-xs text-slate-600 space-y-1.5">
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">IoT Defect Scanner:</span>
-              <span className="text-emerald-700 font-medium">Adapter Interface Ready</span>
+              <span className="text-slate-500">Tenant Isolation:</span>
+              <span className="text-emerald-700 font-medium">Mongoose Scoped Query</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">AI Quality Vision:</span>
-              <span className="text-emerald-700 font-medium">Adapter Interface Ready</span>
+              <span className="text-slate-500">Audit Trail:</span>
+              <span className="text-emerald-700 font-medium">Immutable AuditLog Model</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-slate-500">Real-time Socket:</span>
-              <span className="text-blue-700 font-medium">Socket.IO Rooms</span>
+              <span className="text-slate-500">Role Escalation:</span>
+              <span className="text-emerald-700 font-medium">Server-Side Blocked</span>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Role-Specific Overview Panels */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Workflow className="h-5 w-5 text-blue-600" />
-            Core Business Workflow & Role Responsibilities
-          </CardTitle>
-          <CardDescription>
-            How Everest Textile OS coordinates work between Customers, Mill Administration, and Loom Operators.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className={`p-4 rounded-lg border ${activeRole === 'CUSTOMER' ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 bg-slate-50/50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-slate-900">1. Customer Role</h4>
-                {activeRole === 'CUSTOMER' && <Badge variant="default">Active</Badge>}
-              </div>
-              <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-                <li>Browses published fabric catalogue and weave types</li>
-                <li>Submits quotation inquiry with specifications & quantities</li>
-                <li>Negotiates price and proposed delivery date</li>
-                <li>Tracks live loom production stage and accesses invoices</li>
-              </ul>
-            </div>
-
-            <div className={`p-4 rounded-lg border ${activeRole === 'ADMIN' ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 bg-slate-50/50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-slate-900">2. Admin Role</h4>
-                {activeRole === 'ADMIN' && <Badge variant="default">Active</Badge>}
-              </div>
-              <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-                <li>Reviews inquiries, checks yarn inventory & loom capacity</li>
-                <li>Triggers procurement orders for missing yarn raw material</li>
-                <li>Proposes terms, schedules jobs onto weaving looms</li>
-                <li>Oversees 4-point QC, dispatches, gate passes & invoices</li>
-              </ul>
-            </div>
-
-            <div className={`p-4 rounded-lg border ${activeRole === 'OPERATOR' ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 bg-slate-50/50'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm text-slate-900">3. Operator Role</h4>
-                {activeRole === 'OPERATOR' && <Badge variant="default">Active</Badge>}
-              </div>
-              <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-                <li>Views assigned loom numbers and work orders</li>
-                <li>Records meters produced, machine speed, and waste per shift</li>
-                <li>Logs mechanical or yarn breakage breakdown alerts</li>
-                <li>Performs structured shift handovers with remarks</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
-

@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import healthRoutes from './health.routes.js';
+import authRoutes from './auth.routes.js';
 
 const router = Router();
 
 // Subsystem health endpoint
 router.use('/health', healthRoutes);
+
+// Authentication & Identity endpoints
+router.use('/auth', authRoutes);
 
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {
