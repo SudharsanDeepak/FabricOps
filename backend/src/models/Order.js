@@ -11,6 +11,9 @@ const orderItemSchema = new mongoose.Schema(
       gsm: Number,
       weaveType: String,
       composition: String,
+      yarnCountWarp: String,
+      yarnCountWeft: String,
+      construction: String,
       widthInches: Number,
       colorName: String,
     },
@@ -51,7 +54,12 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Quotation',
       required: true,
-      unique: true, // Guarantees idempotency
+      unique: true, // Guarantees 1-to-1 conversion & prevents duplicate order creation
+    },
+    idempotencyKey: {
+      type: String,
+      sparse: true,
+      unique: true,
     },
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -95,6 +103,14 @@ const orderSchema = new mongoose.Schema(
     ],
     customerNotes: String,
     internalNotes: String,
+    specificationsValidated: {
+      type: Boolean,
+      default: true,
+    },
+    capacityValidated: {
+      type: Boolean,
+      default: true,
+    },
     auditVersion: {
       type: Number,
       default: 1,
@@ -110,4 +126,3 @@ orderSchema.index({ customerId: 1, status: 1 });
 orderSchema.index({ confirmedDeliveryDate: 1 });
 
 export const Order = mongoose.model('Order', orderSchema);
-

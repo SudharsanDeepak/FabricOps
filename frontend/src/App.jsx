@@ -5,6 +5,14 @@ import { RegisterPage } from './pages/auth/RegisterPage';
 import { AccessDeniedPage } from './pages/auth/AccessDeniedPage';
 import { AppShell } from './components/layout/AppShell';
 import { DashboardPage } from './pages/DashboardPage';
+import { FabricCatalogPage } from './pages/customer/FabricCatalogPage';
+import { CustomerQuotesPage } from './pages/customer/CustomerQuotesPage';
+import { CustomerOrdersPage } from './pages/customer/CustomerOrdersPage';
+import { AdminQuotationsPage } from './pages/admin/AdminQuotationsPage';
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { AdminProcurementPage } from './pages/admin/AdminProcurementPage';
+import { AdminProductionPlanningPage } from './pages/admin/AdminProductionPlanningPage';
 import { Loader2, Factory } from 'lucide-react';
 
 function AppContent() {
@@ -37,7 +45,20 @@ function AppContent() {
 
   // RBAC Section Access Check
   const isSectionPermitted = () => {
-    const adminAllowed = ['dashboard', 'quotations', 'orders', 'inventory', 'machines', 'qc', 'dispatch', 'attendance', 'staff', 'audits'];
+    const adminAllowed = [
+      'dashboard',
+      'quotations',
+      'orders',
+      'inventory',
+      'procurement',
+      'planning',
+      'machines',
+      'qc',
+      'dispatch',
+      'attendance',
+      'staff',
+      'audits',
+    ];
     const customerAllowed = ['catalog', 'request-quote', 'my-quotes', 'my-orders', 'invoices', 'profile'];
     const operatorAllowed = ['my-machines', 'shift-log', 'breakdowns', 'handover', 'attendance'];
 
@@ -47,16 +68,51 @@ function AppContent() {
     return false;
   };
 
+  const renderActiveSection = () => {
+    // Customer Sections
+    if (currentSection === 'catalog' || currentSection === 'request-quote') {
+      return <FabricCatalogPage onNavigateSection={setCurrentSection} />;
+    }
+    if (currentSection === 'my-quotes') {
+      return <CustomerQuotesPage onNavigateSection={setCurrentSection} />;
+    }
+    if (currentSection === 'my-orders') {
+      return <CustomerOrdersPage onNavigateSection={setCurrentSection} />;
+    }
+
+    // Admin Sections
+    if (currentSection === 'quotations') {
+      return <AdminQuotationsPage />;
+    }
+    if (currentSection === 'orders') {
+      return <AdminOrdersPage />;
+    }
+    if (currentSection === 'inventory') {
+      return <AdminInventoryPage />;
+    }
+    if (currentSection === 'procurement') {
+      return <AdminProcurementPage />;
+    }
+    if (currentSection === 'planning') {
+      return <AdminProductionPlanningPage />;
+    }
+
+    // Default / Dashboard
+    return (
+      <DashboardPage
+        currentSection={currentSection}
+        onNavigateSection={setCurrentSection}
+      />
+    );
+  };
+
   return (
     <AppShell
       currentSection={currentSection}
       onSectionChange={setCurrentSection}
     >
       {isSectionPermitted() ? (
-        <DashboardPage
-          currentSection={currentSection}
-          onNavigateSection={setCurrentSection}
-        />
+        renderActiveSection()
       ) : (
         <AccessDeniedPage
           requiredRole={currentSection.startsWith('my-') ? 'CUSTOMER / OPERATOR' : 'ADMIN'}

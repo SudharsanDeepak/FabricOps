@@ -19,6 +19,24 @@ const inventoryItemSchema = new mongoose.Schema(
       required: true,
       enum: ['RAW_YARN', 'DYES_CHEMICALS', 'GREY_FABRIC', 'FINISHED_FABRIC', 'SPARE_PARTS'],
     },
+    yarnType: {
+      type: String,
+      trim: true,
+    },
+    yarnColor: {
+      type: String,
+      trim: true,
+    },
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
+    },
+    batchNumbers: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     unit: {
       type: String,
       required: true,
@@ -64,7 +82,7 @@ inventoryItemSchema.index({ category: 1, quantityOnHand: 1 });
 inventoryItemSchema.index({ quantityOnHand: 1, minimumReorderLevel: 1 });
 
 /**
- * Atomic reservation helper: guarantees quantityOnHand >= amount and increments quantityReserved atomically
+ * Atomic reservation helper: guarantees quantityOnHand - quantityReserved >= amount
  */
 inventoryItemSchema.statics.reserveStock = async function (itemId, amount, session = null) {
   if (amount <= 0) throw new Error('Reservation amount must be positive');
@@ -91,7 +109,7 @@ inventoryItemSchema.statics.reserveStock = async function (itemId, amount, sessi
 };
 
 /**
- * Atomic stock deduction helper: safely deducts on hand and reserved stock without going below 0
+ * Atomic stock deduction helper: safely deducts on-hand and reserved stock without going below 0
  */
 inventoryItemSchema.statics.deductStock = async function (itemId, amount, deductFromReserved = true, session = null) {
   if (amount <= 0) throw new Error('Deduction amount must be positive');
@@ -119,5 +137,78 @@ inventoryItemSchema.statics.deductStock = async function (itemId, amount, deduct
   return updated;
 };
 
-export const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);
+/**
+ * Atomic stock receipt helper: safely increments on-hand quantity
+ */
+inventoryItemSchema.statics.receiveStock = async function (itemId, amount, session = null) {
+  if (amount <= 0) throw new Error('Receipt amount must be positive');
 
+  const query = { _id: itemId };
+  const update = { $inc: { quantityOnHand: amount } };
+
+  const options = { new: true, runValidators: true };
+  if (session) options.session = session;
+
+  const updated = await this.findOneAndUpdate(query, update, options);
+  if (!updated) {
+    throw new Error('Stock receipt failed: Item not found');
+  }
+  return updated;
+};
+
+/**
+ * Atomic reservation release helper: decreases quantityReserved safely
+ */
+inventoryItemSchema.statics.releaseReservation = async function (itemId, amount, session = null) {
+  if (amount <= 0) throw new Error('Release amount must be positive');
+
+  const query = {
+    _id: itemId,
+    quantityReserved: { $gte: amount },
+  };
+  const update = { $inc: { quantityReserved: -amount } };
+
+  const options = { new: true, runValidators: true };
+  if (session) options.session = session;
+
+  const updated = await this.findOneAndUpdate(query, update, options);
+  if (!updated) {
+    throw new Error('Reservation release failed: Reserved amount exceeds currently reserved stock');
+  }
+  return updated;
+};
+
+/**
+ * Atomic manual stock adjustment helper (physical audit):
+ * Prevents onHand falling below 0 or below quantityReserved.
+ */
+inventoryItemSchema.statics.adjustStock = async function (itemId, deltaAmount, session = null) {
+  if (deltaAmount === 0) throw new Error('Adjustment delta cannot be zero');
+
+  const query = {
+    _id: itemId,
+    ...(deltaAmount < 0
+      ? {
+          $expr: {
+            $gte: [{ $add: ['$quantityOnHand', deltaAmount] }, '$quantityReserved'],
+          },
+        }
+      : {}),
+  };
+
+  const update = {
+    $inc: { quantityOnHand: deltaAmount },
+    $set: { lastAuditedAt: new Date() },
+  };
+
+  const options = { new: true, runValidators: true };
+  if (session) options.session = session;
+
+  const updated = await this.findOneAndUpdate(query, update, options);
+  if (!updated) {
+    throw new Error('Adjustment failed: Cannot adjust below reserved stock or negative balance');
+  }
+  return updated;
+};
+
+export const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);

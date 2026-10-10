@@ -11,6 +11,7 @@ const goodsReceiptItemSchema = new mongoose.Schema(
     receivedQuantity: { type: Number, required: true, min: [0.01, 'Received quantity must be positive'] },
     rejectedQuantity: { type: Number, default: 0, min: 0 },
     acceptedQuantity: { type: Number, required: true, min: 0 },
+    rejectionReason: String,
     unit: { type: String, required: true, enum: ['KILOGRAM', 'METER', 'CONE', 'LITER', 'ROLL'] },
     warehouseLocation: String,
   },
@@ -50,7 +51,24 @@ const goodsReceiptSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    deliveryChallanNumber: String,
+    deliveryChallanNumber: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    isOverReceipt: {
+      type: Boolean,
+      default: false,
+    },
+    overReceiptReason: String,
+    overReceiptAuthorizedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    supplierDelayDays: {
+      type: Number,
+      default: 0,
+    },
     remarks: String,
   },
   {
@@ -58,7 +76,7 @@ const goodsReceiptSchema = new mongoose.Schema(
   }
 );
 
-goodsReceiptSchema.index({ supplierId: 1, receivedDate: -1 });
+goodsReceiptSchema.index({ supplierId: 1, deliveryChallanNumber: 1 }, { unique: true });
+goodsReceiptSchema.index({ purchaseOrderId: 1, receivedDate: -1 });
 
 export const GoodsReceipt = mongoose.model('GoodsReceipt', goodsReceiptSchema);
-

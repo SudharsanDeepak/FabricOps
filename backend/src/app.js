@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
+import { authenticateToken } from './middleware/auth.middleware.js';
 import { requestLogger } from './middleware/requestLogger.middleware.js';
 import { notFoundHandler, globalErrorHandler } from './middleware/error.middleware.js';
 import apiRoutes from './routes/index.js';
@@ -27,6 +28,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Extract JWT session from cookie or Bearer token
+app.use(authenticateToken);
 
 // Request logger
 app.use(requestLogger);

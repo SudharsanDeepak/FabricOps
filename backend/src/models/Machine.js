@@ -18,6 +18,7 @@ const machineSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
+        'SPINNING_FRAME',
         'WARPING_FRAME',
         'SIZING_MACHINE',
         'AIR_JET_LOOM',
@@ -25,6 +26,8 @@ const machineSchema = new mongoose.Schema(
         'CIRCULAR_KNITTING',
         'DYEING_JET',
         'STENTER_FINISHING',
+        'INSPECTION_TABLE',
+        'PACKING_STATION',
       ],
     },
     location: {

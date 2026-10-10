@@ -30,6 +30,8 @@ const stockMovementSchema = new mongoose.Schema(
         'DISPATCH_ISSUE',
         'PHYSICAL_AUDIT_ADJUSTMENT',
         'SCRAP_WRITE_OFF',
+        'STOCK_RESERVATION',
+        'STOCK_UNRESERVATION',
       ],
       index: true,
     },
@@ -55,7 +57,7 @@ const stockMovementSchema = new mongoose.Schema(
     referenceModel: {
       type: String,
       required: true,
-      enum: ['GoodsReceipt', 'ProductionJob', 'Dispatch', 'ManualAdjustment'],
+      enum: ['GoodsReceipt', 'ProductionJob', 'Dispatch', 'ManualAdjustment', 'Order', 'PurchaseOrder'],
     },
     referenceId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -79,4 +81,3 @@ stockMovementSchema.index({ movementType: 1, createdAt: -1 });
 stockMovementSchema.index({ referenceModel: 1, referenceId: 1 });
 
 export const StockMovement = mongoose.model('StockMovement', stockMovementSchema);
-

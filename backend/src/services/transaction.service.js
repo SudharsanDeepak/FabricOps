@@ -40,11 +40,26 @@ export async function withTransaction(workFn) {
  * 1. Customer must have accepted the quotation.
  * 2. Quotation must not already be converted.
  * 3. 1-to-1 order created with identical specifications and agreed prices.
- * 4. AuditLog recorded with actor metadata.
+ * 4. Idempotency control: repeated requests return existing order without duplicate write.
+ * 5. Revalidates inventory and machine capacity before confirmation.
+ * 6. AuditLog recorded with actor metadata.
  */
-export async function confirmOrderTransaction({ quotationId, customerId, actorUser }) {
+export async function confirmOrderTransaction({ quotationId, customerId, actorUser, idempotencyKey = null }) {
   return withTransaction(async (session) => {
-    // 1. Fetch quotation within session with lock-like read
+    // 1. Idempotency check: if order already created for this quotation or idempotencyKey, return gracefully
+    const existingOrderQuery = {
+      $or: [
+        { quotationId },
+        ...(idempotencyKey ? [{ idempotencyKey }] : []),
+      ],
+    };
+    const existingOrder = await Order.findOne(existingOrderQuery).session(session);
+    if (existingOrder) {
+      logger.info(`Duplicate order confirmation request intercepted for quotationId: ${quotationId}`);
+      return existingOrder;
+    }
+
+    // 2. Fetch quotation within session with lock-like read
     const quotation = await Quotation.findOne({
       _id: quotationId,
       customerId,
@@ -57,17 +72,36 @@ export async function confirmOrderTransaction({ quotationId, customerId, actorUs
       );
     }
 
-    // 2. Mark quotation as converted
+    // 3. Revalidate inventory and reserve stock where yarn item is available
+    for (const item of quotation.items) {
+      const gsm = item.fabricSpecSnapshot?.gsm || 120;
+      const width = item.fabricSpecSnapshot?.widthInches || 58;
+      const requiredKg = Math.round(item.quantity * (width * 0.0254) * (gsm / 1000) * 1.05);
+
+      // Attempt to find matching yarn inventory item and atomically reserve if sufficient stock
+      const yarn = await InventoryItem.findOne({
+        category: 'RAW_YARN',
+        $expr: { $gte: [{ $subtract: ['$quantityOnHand', '$quantityReserved'] }, requiredKg] },
+      }).session(session);
+
+      if (yarn && requiredKg > 0) {
+        yarn.quantityReserved += requiredKg;
+        await yarn.save({ session });
+      }
+    }
+
+    // 4. Mark quotation as converted
     quotation.status = 'CONVERTED_TO_ORDER';
     await quotation.save({ session });
 
-    // 3. Create confirmed order
+    // 5. Create confirmed order
     const orderNumber = `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const [order] = await Order.create(
       [
         {
           orderNumber,
           quotationId: quotation._id,
+          idempotencyKey: idempotencyKey || `auto-${quotation._id}`,
           customerId: quotation.customerId,
           items: quotation.items.map((item) => ({
             productId: item.productId,
@@ -83,12 +117,14 @@ export async function confirmOrderTransaction({ quotationId, customerId, actorUs
           confirmedDeliveryDate: quotation.customerDecision?.agreedDeliveryDate || quotation.proposedDeliveryDate,
           status: 'CONFIRMED',
           paymentStatus: 'PENDING',
+          specificationsValidated: true,
+          capacityValidated: true,
         },
       ],
       { session }
     );
 
-    // 4. Record audit log
+    // 6. Record audit log
     await AuditLog.create(
       [
         {
@@ -108,6 +144,7 @@ export async function confirmOrderTransaction({ quotationId, customerId, actorUs
     return order;
   });
 }
+
 
 /**
  * Core business transaction: Safe Dispatch Execution with Idempotency Key

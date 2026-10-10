@@ -26,9 +26,14 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
+        'ORDER_REQUEST_SUBMITTED',
         'QUOTATION_PROPOSED',
+        'QUOTATION_REVISED',
         'QUOTATION_ACCEPTED',
+        'QUOTATION_REJECTED',
+        'QUOTATION_COUNTER_OFFER',
         'ORDER_CONFIRMED',
+        'MESSAGE_RECEIVED',
         'PRODUCTION_STARTED',
         'QC_PASSED',
         'QC_REJECTED',
@@ -58,4 +63,3 @@ const notificationSchema = new mongoose.Schema(
 notificationSchema.index({ recipientId: 1, isRead: 1, createdAt: -1 });
 
 export const Notification = mongoose.model('Notification', notificationSchema);
-

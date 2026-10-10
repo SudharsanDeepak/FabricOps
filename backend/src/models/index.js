@@ -30,4 +30,6 @@ export { ManufacturingCost } from './ManufacturingCost.js';
 export { CustomerPayment } from './CustomerPayment.js';
 export { Notification } from './Notification.js';
 export { AuditLog } from './AuditLog.js';
+export { OrderMessage } from './OrderMessage.js';
+export { PurchaseRequest } from './PurchaseRequest.js';
 

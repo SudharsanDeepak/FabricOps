@@ -9,6 +9,9 @@ const purchaseOrderItemSchema = new mongoose.Schema(
     },
     description: { type: String, required: true },
     quantity: { type: Number, required: true, min: [0.01, 'Quantity must be positive'] },
+    receivedQuantity: { type: Number, default: 0, min: 0 },
+    acceptedQuantity: { type: Number, default: 0, min: 0 },
+    rejectedQuantity: { type: Number, default: 0, min: 0 },
     unit: { type: String, required: true, enum: ['KILOGRAM', 'METER', 'CONE', 'LITER', 'ROLL'] },
     unitPrice: { type: Number, required: true, min: 0 },
     lineTotal: { type: Number, required: true, min: 0 },
@@ -30,6 +33,10 @@ const purchaseOrderSchema = new mongoose.Schema(
       ref: 'Supplier',
       required: true,
     },
+    purchaseRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PurchaseRequest',
+    },
     items: {
       type: [purchaseOrderItemSchema],
       validate: [(val) => val.length > 0, 'Purchase order must have at least one line item'],
@@ -43,6 +50,10 @@ const purchaseOrderSchema = new mongoose.Schema(
       default: 'DRAFT',
     },
     expectedDeliveryDate: Date,
+    actualDeliveryDate: Date,
+    supplierDelayDays: { type: Number, default: 0 },
+    allowOverReceipt: { type: Boolean, default: false },
+    overReceiptReason: String,
     issuedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -55,6 +66,6 @@ const purchaseOrderSchema = new mongoose.Schema(
 );
 
 purchaseOrderSchema.index({ supplierId: 1, status: 1 });
+purchaseOrderSchema.index({ expectedDeliveryDate: 1 });
 
 export const PurchaseOrder = mongoose.model('PurchaseOrder', purchaseOrderSchema);
-

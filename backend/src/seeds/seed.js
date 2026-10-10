@@ -23,6 +23,7 @@ import {
   Shift,
   Attendance,
   AuditLog,
+  OrderMessage,
 } from '../models/index.js';
 
 export async function runSeed() {
@@ -276,6 +277,28 @@ export async function runSeed() {
     },
   ]);
 
+  await PurchaseOrder.create({
+    poNumber: 'PO-2026-YRN-0041',
+    supplierId: yarnSupplier._id,
+    items: [
+      {
+        inventoryItemId: rawYarn40s._id,
+        description: '40s Ne Combed Ring Spun Cotton Yarn - Advance Spin Order',
+        quantity: 2000,
+        unit: 'KILOGRAM',
+        unitPrice: 315,
+        lineTotal: 630000,
+      },
+    ],
+    subtotal: 630000,
+    taxAmount: 31500,
+    totalAmount: 661500,
+    status: 'ISSUED',
+    expectedDeliveryDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
+    issuedBy: adminUser._id,
+    notes: 'Advance booking for upcoming seasonal poplin and shirting runs',
+  });
+
   // 6. Seed Machines
   logger.info('Seeding Machine Fleet...');
   const [airJetLoom1, rapierLoom1] = await Machine.insertMany([
@@ -370,6 +393,195 @@ export async function runSeed() {
     status: 'IN_PRODUCTION',
     paymentStatus: 'PENDING',
   });
+
+  // 7b. Seed Active Customer Inquiry (PENDING_REVIEW)
+  const pendingInquiry = await OrderRequest.create({
+    requestNumber: 'REQ-2026-0031',
+    customerId: customerUser._id,
+    items: [
+      {
+        productId: twillProduct._id,
+        targetQuantity: 4000,
+        targetUnit: 'METER',
+        targetPricePerUnit: 190,
+        targetDeliveryDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+        notes: 'Khaki Stone shade required for seasonal chino pants production run.',
+        fabricSpecSnapshot: {
+          gsm: 240,
+          weaveType: 'TWILL',
+          composition: '100% Organic Cotton',
+          yarnCountWarp: '30/2 Ne',
+          yarnCountWeft: '20s Ne',
+          construction: '108x56',
+          widthInches: 60,
+          colorName: 'Khaki Stone',
+        },
+      },
+    ],
+    specificationDocuments: [
+      {
+        name: 'TechPack_Chino_HeavyTwill_2026.pdf',
+        fileUrl: 'https://everesttextiles.internal/specs/TechPack_Chino_HeavyTwill.pdf',
+        fileType: 'application/pdf',
+        fileSize: 345000,
+      },
+    ],
+    preferredDeliveryDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+    customerNotes: 'Please verify reed space compatibility on Picanol Rapier loom.',
+    status: 'PENDING_REVIEW',
+  });
+
+  // 7c. Seed Active Quotation Under Negotiation (REVISED status with Revisions #1 and #2)
+  const denimQuoteItemsRev1 = [
+    {
+      productId: denimProduct._id,
+      fabricSpecSnapshot: {
+        gsm: 410,
+        weaveType: 'TWILL',
+        composition: '98% Cotton / 2% Elastane',
+        widthInches: 62,
+        colorName: 'Deep Indigo',
+      },
+      quantity: 2500,
+      unit: 'METER',
+      unitPrice: 260,
+      lineTotal: 650000,
+      estimatedProductionDays: 16,
+      yarnAvailableInStock: true,
+    },
+  ];
+
+  const denimQuoteItemsRev2 = [
+    {
+      productId: denimProduct._id,
+      fabricSpecSnapshot: {
+        gsm: 410,
+        weaveType: 'TWILL',
+        composition: '98% Cotton / 2% Elastane',
+        widthInches: 62,
+        colorName: 'Deep Indigo',
+      },
+      quantity: 2500,
+      unit: 'METER',
+      unitPrice: 252,
+      lineTotal: 630000,
+      estimatedProductionDays: 14,
+      yarnAvailableInStock: true,
+    },
+  ];
+
+  const activeQuote = await Quotation.create({
+    quotationNumber: 'QT-2026-0049',
+    customerId: customerUser._id,
+    items: denimQuoteItemsRev2,
+    subtotal: 630000,
+    taxPercent: 5,
+    taxAmount: 31500,
+    totalAmount: 661500,
+    proposedDeliveryDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000),
+    productionLeadTimeDays: 14,
+    materialAvailability: {
+      yarnInStock: true,
+      onHandKg: 3200,
+      reservedKg: 800,
+      availableKg: 2400,
+      expectedIncomingKg: 2000,
+      incomingDeliveryDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
+      supplierGuaranteed: false,
+      shortageKg: 0,
+      notes: 'Cotton yarn available in stock; Lycra core spun yarn allocated.',
+    },
+    assumptions: [
+      'Assumes rapier loom allocation at 750 picks/min with elastane tension controller',
+      'Continuous rope-dyeing cycle schedule confirmed',
+      '4-Point quality grading with Grade A pass threshold',
+    ],
+    riskFactors: [
+      'Indigo crocking fastness rating sensitive to customer post-wash rinse',
+    ],
+    validUntil: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
+    currentRevisionNumber: 2,
+    revisions: [
+      {
+        revisionNumber: 1,
+        items: denimQuoteItemsRev1,
+        subtotal: 650000,
+        taxPercent: 5,
+        taxAmount: 32500,
+        totalAmount: 682500,
+        proposedDeliveryDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
+        productionLeadTimeDays: 16,
+        notes: 'Initial quotation at standard rate ₹260/meter',
+        revisedBy: adminUser._id,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      },
+      {
+        revisionNumber: 2,
+        items: denimQuoteItemsRev2,
+        subtotal: 630000,
+        taxPercent: 5,
+        taxAmount: 31500,
+        totalAmount: 661500,
+        proposedDeliveryDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000),
+        productionLeadTimeDays: 14,
+        notes: 'Revised volume discount to ₹252/meter following customer counter-offer',
+        revisedBy: adminUser._id,
+        createdAt: new Date(),
+      },
+    ],
+    customerDecision: {
+      decision: 'COUNTER_OFFER',
+      decidedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      customerNotes: 'Apex requested ₹250/m target; mill offered ₹252/m concession.',
+      counterOffer: {
+        targetPrice: 656250,
+        targetDeliveryDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+        notes: 'Customer target: ₹250/meter for 2,500m',
+      },
+    },
+    status: 'REVISED',
+    adminNotes: 'Negotiation active; customer expected to accept Rev #2.',
+    createdBy: adminUser._id,
+  });
+
+  // 7d. Seed Order-Specific Message Thread
+  await OrderMessage.create([
+    {
+      threadType: 'QUOTATION',
+      referenceId: activeQuote._id,
+      senderId: customerUser._id,
+      senderRole: 'CUSTOMER',
+      senderName: customerUser.name,
+      message: 'Can we negotiate the price down to ₹250/meter if we commit to repeat quarterly runs?',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      threadType: 'QUOTATION',
+      referenceId: activeQuote._id,
+      senderId: adminUser._id,
+      senderRole: 'ADMIN',
+      senderName: adminUser.name,
+      message: 'Hello Aditi, we have issued Revision #2 at ₹252/meter with a compressed 14-day production timeline. Lycra yarn lot is already allocated on Picanol Rapier #2.',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+    {
+      threadType: 'ORDER_REQUEST',
+      referenceId: pendingInquiry._id,
+      senderId: customerUser._id,
+      senderRole: 'CUSTOMER',
+      senderName: customerUser.name,
+      message: 'Submitted inquiry with attached Tech Pack. Looking forward to feasibility review!',
+      attachments: [
+        {
+          name: 'TechPack_Chino_HeavyTwill_2026.pdf',
+          fileUrl: 'https://everesttextiles.internal/specs/TechPack_Chino_HeavyTwill.pdf',
+          fileType: 'application/pdf',
+          fileSize: 345000,
+        },
+      ],
+      createdAt: new Date(),
+    },
+  ]);
 
   // 8. Seed Production Job, Fabric Rolls, and 4-Point QC
   logger.info('Seeding Production Floor & Quality Inspections...');

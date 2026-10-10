@@ -93,17 +93,23 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            onClick={() => onNavigateSection('quotations')}
+            className="cursor-pointer hover:border-amber-300 hover:shadow-xs transition-all"
+          >
             <CardHeader className="p-4 pb-2">
               <CardDescription className="text-xs">Pending Quotations</CardDescription>
               <CardTitle className="text-2xl font-bold text-amber-600">3 Inquiries</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 text-xs text-slate-500">
-              Avg review time: 4.2 hours
+            <CardContent className="p-4 pt-0 text-xs text-blue-600 font-semibold flex items-center gap-1">
+              <span>Open Studio &rarr;</span>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            onClick={() => onNavigateSection('orders')}
+            className="cursor-pointer hover:border-blue-300 hover:shadow-xs transition-all"
+          >
             <CardHeader className="p-4 pb-2">
               <CardDescription className="text-xs">Daily Woven Output</CardDescription>
               <CardTitle className="text-2xl font-bold text-blue-600">14,850 m</CardTitle>
@@ -127,42 +133,56 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
 
       {role === 'CUSTOMER' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card
+            onClick={() => onNavigateSection('catalog')}
+            className="cursor-pointer hover:border-blue-300 hover:shadow-xs transition-all"
+          >
             <CardHeader className="p-4 pb-2">
               <div className="flex items-center justify-between">
-                <CardDescription className="text-xs">Credit & Payment Terms</CardDescription>
-                <Badge variant="outline" className="text-xs">Net 30</Badge>
+                <CardDescription className="text-xs">Fabric Catalog & ATP</CardDescription>
+                <Badge variant="outline" className="text-xs">Published</Badge>
               </div>
-              <CardTitle className="text-xl font-bold text-slate-800">₹{(profile?.creditLimit || 500000).toLocaleString()}</CardTitle>
+              <CardTitle className="text-xl font-bold text-blue-700">Explore Range</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 text-xs text-slate-500">
-              Credit Limit Available &bull; Tax ID: {profile?.taxId || 'Registered'}
+            <CardContent className="p-4 pt-0 text-xs text-slate-500 flex items-center justify-between">
+              <span>Poplin, Twill, Denim</span>
+              <span className="font-semibold text-blue-600">Browse &rarr;</span>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            onClick={() => onNavigateSection('my-quotes')}
+            className="cursor-pointer hover:border-blue-300 hover:shadow-xs transition-all"
+          >
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="text-xs">Inquiries & Quotations</CardDescription>
+                <Badge variant="success" className="text-xs">1 Offer Ready</Badge>
+              </div>
+              <CardTitle className="text-xl font-bold text-slate-800">Negotiate Quotes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 text-xs text-slate-500 flex items-center justify-between">
+              <span>Counter-offer, Accept, Confirm</span>
+              <span className="font-semibold text-blue-600">View &rarr;</span>
+            </CardContent>
+          </Card>
+
+          <Card
+            onClick={() => onNavigateSection('my-orders')}
+            className="cursor-pointer hover:border-blue-300 hover:shadow-xs transition-all"
+          >
             <CardHeader className="p-4 pb-2">
               <CardDescription className="text-xs">Active Production Order</CardDescription>
               <CardTitle className="text-xl font-bold text-blue-600">ORD-2026-0018</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0 text-xs text-slate-600">
-              5,000m Combed Cotton Poplin &bull; Stage: <strong className="text-blue-700">Weaving (24%)</strong>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="p-4 pb-2">
-              <CardDescription className="text-xs">Shipping Destination</CardDescription>
-              <CardTitle className="text-base font-semibold text-slate-800 truncate">
-                {profile?.shippingAddress?.city || 'Sriperumbudur'}, {profile?.shippingAddress?.state || 'Tamil Nadu'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 text-xs text-slate-500">
-              Direct dispatch with transit pass and digital invoice.
+            <CardContent className="p-4 pt-0 text-xs text-slate-600 flex items-center justify-between">
+              <span>5,000m Poplin (Weaving 24%)</span>
+              <span className="font-semibold text-blue-600">Track &rarr;</span>
             </CardContent>
           </Card>
         </div>
       )}
+
 
       {role === 'OPERATOR' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

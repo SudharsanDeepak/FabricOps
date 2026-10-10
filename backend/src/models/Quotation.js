@@ -1,5 +1,20 @@
 import mongoose from 'mongoose';
 
+const materialAvailabilitySchema = new mongoose.Schema(
+  {
+    yarnInStock: { type: Boolean, default: true },
+    onHandKg: { type: Number, default: 0 },
+    reservedKg: { type: Number, default: 0 },
+    availableKg: { type: Number, default: 0 },
+    expectedIncomingKg: { type: Number, default: 0 },
+    incomingDeliveryDate: Date,
+    supplierGuaranteed: { type: Boolean, default: false }, // Shortage must not imply guaranteed supplier delivery
+    shortageKg: { type: Number, default: 0 },
+    notes: String,
+  },
+  { _id: false }
+);
+
 const quotationItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -13,6 +28,7 @@ const quotationItemSchema = new mongoose.Schema(
       composition: String,
       yarnCountWarp: String,
       yarnCountWeft: String,
+      construction: String,
       widthInches: Number,
       colorName: String,
     },
@@ -53,8 +69,15 @@ const quotationRevisionSchema = new mongoose.Schema(
   {
     revisionNumber: { type: Number, required: true },
     items: [quotationItemSchema],
+    subtotal: { type: Number },
+    taxPercent: { type: Number, default: 5 },
+    taxAmount: { type: Number },
     totalAmount: { type: Number, required: true },
     proposedDeliveryDate: { type: Date, required: true },
+    productionLeadTimeDays: { type: Number, default: 14 },
+    materialAvailability: materialAvailabilitySchema,
+    assumptions: [String],
+    riskFactors: [String],
     notes: String,
     revisedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -77,6 +100,15 @@ const customerDecisionSchema = new mongoose.Schema(
     customerNotes: String,
     agreedDeliveryDate: Date,
     agreedPrice: Number,
+    counterOffer: {
+      targetPrice: Number,
+      targetDeliveryDate: Date,
+      notes: String,
+    },
+    decidedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   { _id: false }
 );
@@ -108,6 +140,16 @@ const quotationSchema = new mongoose.Schema(
     taxAmount: { type: Number, required: true, min: 0 },
     totalAmount: { type: Number, required: true, min: 0 },
     proposedDeliveryDate: { type: Date, required: true },
+    productionLeadTimeDays: { type: Number, default: 14 },
+    materialAvailability: materialAvailabilitySchema,
+    assumptions: {
+      type: [String],
+      default: ['Assumes standard loom allocation and quality inspection schedule'],
+    },
+    riskFactors: {
+      type: [String],
+      default: ['Estimated dates pending final material confirmation upon order placement'],
+    },
     validUntil: { type: Date, required: true },
     currentRevisionNumber: { type: Number, default: 1 },
     revisions: [quotationRevisionSchema],
@@ -132,7 +174,7 @@ const quotationSchema = new mongoose.Schema(
 );
 
 quotationSchema.index({ customerId: 1, status: 1 });
+quotationSchema.index({ orderRequestId: 1 });
 quotationSchema.index({ validUntil: 1 });
 
 export const Quotation = mongoose.model('Quotation', quotationSchema);
-

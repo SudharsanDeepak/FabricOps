@@ -22,7 +22,7 @@ const productionJobSchema = new mongoose.Schema(
     stage: {
       type: String,
       required: true,
-      enum: ['WARPING', 'SIZING', 'WEAVING', 'DYEING', 'FINISHING'],
+      enum: ['SPINNING', 'WARPING', 'SIZING', 'WEAVING', 'DYEING', 'FINISHING', 'INSPECTION', 'PACKING'],
     },
     targetQuantity: {
       type: Number,
