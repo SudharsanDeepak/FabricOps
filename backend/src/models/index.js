@@ -33,4 +33,7 @@ export { AuditLog } from './AuditLog.js';
 export { OrderMessage } from './OrderMessage.js';
 export { PurchaseRequest } from './PurchaseRequest.js';
 export { OrderTimelineEvent } from './OrderTimelineEvent.js';
+export { DefectObservation } from './DefectObservation.js';
+export { ReworkEvent } from './ReworkEvent.js';
+export { ProductionRun } from './ProductionRun.js';
 

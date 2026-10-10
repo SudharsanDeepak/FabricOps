@@ -11,6 +11,7 @@ import inventoryRoutes from './inventory.routes.js';
 import procurementRoutes from './procurement.routes.js';
 import productionPlanningRoutes from './productionPlanning.routes.js';
 import operatorRoutes from './operator.routes.js';
+import qualityRoutes from './quality.routes.js';
 
 const router = Router();
 
@@ -49,6 +50,9 @@ router.use('/production-planning', productionPlanningRoutes);
 
 // Factory Floor Operator Machine Dashboard & Terminals
 router.use('/operator', operatorRoutes);
+
+// Quality Control & Fabric Roll Traceability
+router.use('/quality', qualityRoutes);
 
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {
