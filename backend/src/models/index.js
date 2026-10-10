@@ -22,6 +22,7 @@ export { FabricRoll } from './FabricRoll.js';
 export { QualityInspection } from './QualityInspection.js';
 export { FinishedGoodsInventory } from './FinishedGoodsInventory.js';
 export { Dispatch } from './Dispatch.js';
+export { DispatchItem } from './DispatchItem.js';
 export { Invoice } from './Invoice.js';
 export { Shift } from './Shift.js';
 export { Attendance } from './Attendance.js';
@@ -33,4 +34,12 @@ export { AuditLog } from './AuditLog.js';
 export { OrderMessage } from './OrderMessage.js';
 export { PurchaseRequest } from './PurchaseRequest.js';
 export { OrderTimelineEvent } from './OrderTimelineEvent.js';
+export { DefectObservation } from './DefectObservation.js';
+export { ReworkEvent } from './ReworkEvent.js';
+export { ProductionRun } from './ProductionRun.js';
+export { WageStatement } from './WageStatement.js';
+export { WagePayment } from './WagePayment.js';
+export { CostEntry } from './CostEntry.js';
+export { SupplierInvoice } from './SupplierInvoice.js';
+
 

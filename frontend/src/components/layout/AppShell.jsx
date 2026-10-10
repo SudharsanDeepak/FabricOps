@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { NotificationBell } from '../common/NotificationBell';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -90,6 +91,7 @@ export function AppShell({ currentSection, onSectionChange, children }) {
     { id: 'my-machines', label: 'Assigned Looms / Frames', icon: Cpu, badge: 'Assigned' },
     { id: 'task-board', label: 'Operator Task Board', icon: Layers, badge: 'Task Board' },
     { id: 'shift-log', label: 'Record Shift Production', icon: ClipboardList },
+    { id: 'qc', label: 'QC & Roll Traceability', icon: ShieldCheck },
     { id: 'breakdowns', label: 'Report Machine Breakdown', icon: AlertCircle, badge: 'Alert' },
     { id: 'handover', label: 'Shift Handover Notes', icon: Users },
     { id: 'attendance', label: 'My Timesheet', icon: UserCheck },
@@ -140,6 +142,9 @@ export function AppShell({ currentSection, onSectionChange, children }) {
             </span>
             <RefreshCw className={`h-3 w-3 text-slate-400 ${healthStatus.loading ? 'animate-spin' : ''}`} />
           </div>
+
+          {/* Notification Centre Bell */}
+          <NotificationBell onNavigateSection={onSectionChange} />
 
           <div className="h-8 w-px bg-slate-200 hidden sm:block" />
 

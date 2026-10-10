@@ -25,7 +25,7 @@ export const markNotificationRead = async (req, res, next) => {
   try {
     const notification = await Notification.findOneAndUpdate(
       { _id: req.params.id, recipientId: req.user._id },
-      { $set: { isRead: true } },
+      { $set: { isRead: true, readAt: new Date() } },
       { new: true }
     );
 
@@ -47,17 +47,20 @@ export const markNotificationRead = async (req, res, next) => {
 
 export const markAllNotificationsRead = async (req, res, next) => {
   try {
-    await Notification.updateMany(
+    const now = new Date();
+    const result = await Notification.updateMany(
       { recipientId: req.user._id, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true, readAt: now } }
     );
 
     res.json({
       success: true,
       message: 'All notifications marked as read',
+      modifiedCount: result.modifiedCount,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
