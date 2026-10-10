@@ -27,11 +27,15 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import AeroShards from '../components/ui/AeroShards';
 
 export function DashboardPage({ currentSection, onNavigateSection }) {
   const { user, profile, role } = useAuth();
   const [healthData, setHealthData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bannerFlow, setBannerFlow] = useState('stream');
+  const [bannerMaterial, setBannerMaterial] = useState('pearl');
+  const [bannerPaused, setBannerPaused] = useState(false);
 
   useEffect(() => {
     api.get('/health')
@@ -47,34 +51,107 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="rounded-xl bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 p-6 text-white shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+      {/* Living WebGPU Textile Yarn Banner */}
+      <div className="relative rounded-2xl bg-slate-950 border border-slate-800/80 p-6 sm:p-7 text-white shadow-xl overflow-hidden group">
+        {/* Living Shards Background Canvas */}
+        <div className="absolute inset-0 z-0 opacity-80 pointer-events-none">
+          <AeroShards
+            backgroundColor="#080e1e"
+            shardColor="#13233e"
+            accentColor="#3b82f6"
+            placement="full"
+            flow={bannerFlow}
+            material={bannerMaterial}
+            detail="balanced"
+            effect="none"
+            scale={1.05}
+            spread={0.9}
+            depth={1.15}
+            speed={0.75}
+            spin={0.7}
+            interaction="repel"
+            density={1.1}
+            shardSize={1.0}
+            stretch={1.1}
+            turbulence={0.35}
+            glow={1.15}
+            edgeSoftness={2}
+            bloom={1.0}
+            grain={0.03}
+            chromaticAberration={0.005}
+            transitionDuration={1.1}
+            interactionRadius={1.4}
+            interactionStrength={0.5}
+            rippleIntensity={1.0}
+            holdToGather
+            paused={bannerPaused}
+          />
+        </div>
+
+        {/* Ambient Dark Gradient Wash for Legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-transparent pointer-events-none z-[1]" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="max-w-2xl space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-900/80 border border-blue-400/40 px-2.5 py-0.5 text-xs text-blue-200 font-medium">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 Verified Session &bull; {role}
               </span>
-              <span className="text-xs text-blue-200">
+              <span className="text-xs text-blue-200/90">
                 Logged in as <strong>{user?.name}</strong>
               </span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm">
               {role === 'ADMIN' && 'FabricOps Executive Console'}
               {role === 'CUSTOMER' && `Welcome, ${profile?.companyName || user?.name}`}
               {role === 'OPERATOR' && `Loom Operator Terminal — ${profile?.department || 'Weaving'} Shed`}
             </h1>
-            <p className="mt-1 text-sm text-blue-100 max-w-2xl">
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed drop-shadow-xs">
               {role === 'ADMIN' && 'Real-time orchestration of yarn inventory, loom capacity, quality scoring, dispatches, and operator wages.'}
               {role === 'CUSTOMER' && 'Monitor your custom woven fabrics, review quotes, track roll production stages, and download tax invoices.'}
               {role === 'OPERATOR' && 'View assigned loom machines, log shift production meters, and report mechanical breakdown halts.'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-900/60 border border-blue-400/40 px-3 py-1.5 text-xs text-blue-200">
+
+          {/* Interactive Simulation Controls & Telemetry Pill */}
+          <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-2.5 shrink-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 px-3 py-1.5 text-xs text-blue-200 shadow-sm backdrop-blur">
               <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
-              Real-time Subsystem Active
+              <span>Real-time Subsystem Active</span>
+            </span>
+
+            {/* Weave Flow Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 px-2 py-1 rounded-lg backdrop-blur shadow-sm text-xs">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider pl-1">Filaments:</span>
+              {(['stream', 'vortex', 'ribbon']).map((flow) => (
+                <button
+                  key={flow}
+                  type="button"
+                  onClick={() => setBannerFlow(flow)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                    bannerFlow === flow
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {flow}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setBannerPaused((p) => !p)}
+                title={bannerPaused ? 'Resume Shard Animation' : 'Pause Shard Animation'}
+                className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
+              >
+                {bannerPaused ? <Play className="h-3 w-3 text-emerald-400" /> : <Pause className="h-3 w-3" />}
+              </button>
+            </div>
+
+            <span className="text-[10px] text-slate-400/90 font-mono hidden lg:block">
+              Click & drag to create yarn ripples
             </span>
           </div>
         </div>

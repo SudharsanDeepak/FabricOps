@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import AeroShards from '../../components/ui/AeroShards';
 
 export function RegisterPage({ onNavigateToLogin }) {
   const { registerCustomer, error: authError } = useAuth();
@@ -94,7 +95,44 @@ export function RegisterPage({ onNavigateToLogin }) {
   const displayError = localError || authError;
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      {/* Living WebGPU Procedural Shards / Yarn Filaments Background */}
+      <div className="absolute inset-0 z-0">
+        <AeroShards
+          backgroundColor="#070b14"
+          shardColor="#111c33"
+          accentColor="#3b82f6"
+          placement="full"
+          flow="ribbon"
+          material="satin"
+          detail="balanced"
+          effect="none"
+          scale={1.1}
+          spread={1}
+          depth={1.25}
+          speed={0.7}
+          spin={0.75}
+          interaction="repel"
+          density={1.1}
+          shardSize={1.1}
+          stretch={1.1}
+          turbulence={0.35}
+          glow={1.1}
+          edgeSoftness={2}
+          bloom={1.0}
+          grain={0.04}
+          chromaticAberration={0.005}
+          transitionDuration={1.2}
+          interactionRadius={1.5}
+          interactionStrength={0.5}
+          rippleIntensity={1.0}
+          holdToGather
+        />
+      </div>
+
+      {/* Depth vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.5)_0%,rgba(2,6,23,0.85)_100%)] pointer-events-none z-[1]" />
+
       <div className="w-full max-w-2xl relative z-10 space-y-6">
         <div className="flex items-center justify-between">
           <button

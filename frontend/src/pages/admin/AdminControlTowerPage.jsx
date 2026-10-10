@@ -27,8 +27,10 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { api } from '../../lib/api';
 import { getSocket } from '../../lib/socket';
+import { useAuth } from '../../context/AuthContext';
 
 export function AdminControlTowerPage({ onNavigateSection }) {
+  const { role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -75,10 +77,11 @@ export function AdminControlTowerPage({ onNavigateSection }) {
 
   // Socket.IO Room Authorization & Real-Time Sync
   useEffect(() => {
+    if (role !== 'ADMIN') return;
     const socket = getSocket();
 
     socket.emit('join_room', 'admin_control_tower', (res) => {
-      if (res?.error) {
+      if (res?.error && role === 'ADMIN') {
         console.warn('Control tower room subscription:', res.error);
       }
     });
@@ -97,7 +100,7 @@ export function AdminControlTowerPage({ onNavigateSection }) {
       socket.off('production:job_updated', handleUpdate);
       socket.off('machine:status_changed', handleUpdate);
     };
-  }, [fetchControlTower]);
+  }, [role, fetchControlTower]);
 
   // Handle stage status advance
   const handleStageSubmit = async (e) => {

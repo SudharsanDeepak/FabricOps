@@ -12,3 +12,11 @@ export function getSocket() {
   }
   return socketInstance;
 }
+
+export function resetSocket() {
+  if (socketInstance) {
+    socketInstance.disconnect();
+    socketInstance = null;
+  }
+}
+
