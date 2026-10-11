@@ -156,15 +156,15 @@ export function FeasibilityStudioModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col">
+      <div className="relative w-full max-w-4xl bg-[#0D1220] text-slate-100 rounded-2xl shadow-2xl border border-slate-800 overflow-hidden my-8 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#090D17]">
           <div>
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
                 <Cpu className="h-4 w-4" />
               </span>
-              <h3 className="text-base font-bold text-slate-800">
+              <h3 className="text-base font-bold text-slate-200">
                 {quotationToRevise ? `Quotation Revision Studio (Rev #${(quotationToRevise.currentRevisionNumber || 1) + 1})` : 'Feasibility & Quotation Studio'}
               </h3>
             </div>
@@ -179,7 +179,7 @@ export function FeasibilityStudioModal({
                 type="button"
                 onClick={() => setActiveTab('feasibility')}
                 className={`px-3 py-1 rounded-md transition-colors ${
-                  activeTab === 'feasibility' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  activeTab === 'feasibility' ? 'bg-[#EBA832] text-black shadow-xs font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 1. Capacity & Stock Audit
@@ -188,7 +188,7 @@ export function FeasibilityStudioModal({
                 type="button"
                 onClick={() => setActiveTab('quote')}
                 className={`px-3 py-1 rounded-md transition-colors ${
-                  activeTab === 'quote' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  activeTab === 'quote' ? 'bg-[#EBA832] text-black shadow-xs font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 2. Price & Terms Offer
@@ -196,7 +196,7 @@ export function FeasibilityStudioModal({
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+              className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-400"
             >
               <X className="h-5 w-5" />
             </button>
@@ -217,11 +217,11 @@ export function FeasibilityStudioModal({
           ) : activeTab === 'feasibility' ? (
             <div className="space-y-6">
               {/* Yarn Stock Analysis Card */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-xl border border-slate-800 bg-[#0D1220] p-5 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Package className="h-4 w-4 text-blue-600" />
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                       Yarn Stock Multi-Level Audit
                     </h4>
                   </div>
@@ -231,23 +231,23 @@ export function FeasibilityStudioModal({
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-4">
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-semibold block uppercase">Required Yarn:</span>
-                    <span className="text-lg font-bold text-slate-900 font-mono">
+                    <span className="text-lg font-bold text-white font-mono">
                       {feasibility?.yarnFeasibility?.yarnRequiredKg} kg
                     </span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Includes 5% weaving loss</span>
                   </div>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-semibold block uppercase">On-Hand Stock:</span>
-                    <span className="text-lg font-bold text-slate-700 font-mono">
+                    <span className="text-lg font-bold text-slate-300 font-mono">
                       {feasibility?.yarnFeasibility?.onHandKg} kg
                     </span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Physical in mill</span>
                   </div>
 
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                  <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-semibold block uppercase">Reserved Stock:</span>
                     <span className="text-lg font-bold text-amber-700 font-mono">
                       {feasibility?.yarnFeasibility?.reservedKg} kg
@@ -276,15 +276,15 @@ export function FeasibilityStudioModal({
 
                 {/* Open POs for Incoming Yarn */}
                 {feasibility?.yarnFeasibility?.incomingPOs?.length > 0 && (
-                  <div className="mt-3 p-3 bg-blue-50/50 border border-blue-200 rounded-lg text-xs">
+                  <div className="mt-3 p-3 bg-[#5227FF]/15 border border-[#5227FF]/40 rounded-lg text-xs">
                     <span className="font-semibold text-blue-900 block mb-1">
                       Expected Incoming Yarn Orders (Open Supplier POs):
                     </span>
                     <div className="space-y-1">
                       {feasibility.yarnFeasibility.incomingPOs.map((po, idx) => (
-                        <div key={idx} className="flex justify-between text-[11px] text-slate-700">
+                        <div key={idx} className="flex justify-between text-[11px] text-slate-300">
                           <span>{po.poNumber} &bull; {po.supplierName} ({po.quantity} {po.unit})</span>
-                          <span className="font-mono text-blue-700">ETA: {new Date(po.expectedDeliveryDate).toLocaleDateString()}</span>
+                          <span className="font-mono text-[#FF9FFC]">ETA: {new Date(po.expectedDeliveryDate).toLocaleDateString()}</span>
                         </div>
                       ))}
                     </div>
@@ -302,15 +302,15 @@ export function FeasibilityStudioModal({
               </div>
 
               {/* Machine Fleet & Reed Space Compatibility */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-xl border border-slate-800 bg-[#0D1220] p-5 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Cpu className="h-4 w-4 text-purple-600" />
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                       Loom Fleet Compatibility & Workload
                     </h4>
                   </div>
-                  <span className="text-xs font-semibold text-slate-600">
+                  <span className="text-xs font-semibold text-slate-400">
                     Fabric Width: <strong>{targetItem.fabricSpecSnapshot?.widthInches || 58}"</strong>
                   </span>
                 </div>
@@ -319,12 +319,12 @@ export function FeasibilityStudioModal({
                   {feasibility?.machineFeasibility?.compatibleMachines?.map((machine) => (
                     <div
                       key={machine.machineId}
-                      className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/60"
+                      className="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-900/60/60"
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">{machine.machineCode}</span>
-                          <span className="text-slate-600">&bull; {machine.name}</span>
+                          <span className="font-bold text-white">{machine.machineCode}</span>
+                          <span className="text-slate-400">&bull; {machine.name}</span>
                           <Badge variant={machine.status === 'RUNNING' ? 'success' : 'outline'}>
                             {machine.status}
                           </Badge>
@@ -348,24 +348,24 @@ export function FeasibilityStudioModal({
               </div>
 
               {/* Proposed Timeline Formula */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+              <div className="rounded-xl border border-slate-800 bg-[#0D1220] p-5 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                       Transparent Timeline Formula Breakdown
                     </h4>
                   </div>
-                  <span className="text-xs font-bold text-blue-700 font-mono">
+                  <span className="text-xs font-bold text-[#FF9FFC] font-mono">
                     Total: {feasibility?.timeline?.totalLeadTimeDays || proposedDays} Days
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs mb-4">
                   {feasibility?.timeline?.breakdown?.map((stage, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 text-center">
+                    <div key={idx} className="p-2.5 rounded-lg border border-slate-100 bg-slate-900/60 text-center">
                       <span className="text-[10px] font-bold text-slate-500 block truncate">{stage.stage}</span>
-                      <span className="text-base font-bold text-slate-800 font-mono my-0.5 block">{stage.days}d</span>
+                      <span className="text-base font-bold text-slate-200 font-mono my-0.5 block">{stage.days}d</span>
                       <span className="text-[9px] text-slate-400 block truncate">{stage.status}</span>
                     </div>
                   ))}
@@ -388,7 +388,7 @@ export function FeasibilityStudioModal({
             <form onSubmit={handleSubmitQuotation} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
                     Offered Unit Price (₹ / {unit})
                   </label>
                   <input
@@ -398,7 +398,7 @@ export function FeasibilityStudioModal({
                     required
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg font-mono focus:border-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-700 rounded-lg font-mono focus:border-blue-500 focus:outline-none"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">
                     Base catalog price: ₹{targetItem.productId?.pricing?.basePricePerUnit || 140}
@@ -406,7 +406,7 @@ export function FeasibilityStudioModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
                     Production Lead Time (Days)
                   </label>
                   <input
@@ -416,7 +416,7 @@ export function FeasibilityStudioModal({
                     required
                     value={proposedDays}
                     onChange={(e) => setProposedDays(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg font-mono focus:border-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-700 rounded-lg font-mono focus:border-blue-500 focus:outline-none"
                   />
                   <span className="text-[10px] text-slate-400 mt-0.5 block">
                     Calculated: {proposedDeliveryDate.toLocaleDateString()}
@@ -424,13 +424,13 @@ export function FeasibilityStudioModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
                     GST Rate (%)
                   </label>
                   <select
                     value={taxPercent}
                     onChange={(e) => setTaxPercent(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                    className="w-full text-xs px-3 py-2 border border-slate-700 rounded-lg focus:border-blue-500 focus:outline-none"
                   >
                     <option value="5">5% (Fabric Standard)</option>
                     <option value="12">12% (Technical Textile)</option>
@@ -440,48 +440,48 @@ export function FeasibilityStudioModal({
               </div>
 
               {/* Commercial Summary Banner */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
                 <div>
                   <span className="text-slate-500">Summary: </span>
                   <strong>{quantity.toLocaleString()} {unit}</strong> @ <strong>₹{Number(unitPrice).toFixed(2)}</strong> + {taxPercent}% GST
                 </div>
                 <div className="text-right">
                   <span className="text-[11px] text-slate-500 mr-2">Total Quotation Value:</span>
-                  <span className="text-lg font-bold font-mono text-blue-700">₹{totalAmount.toLocaleString()}</span>
+                  <span className="text-lg font-bold font-mono text-[#FF9FFC]">₹{totalAmount.toLocaleString()}</span>
                 </div>
               </div>
 
               {/* Transparent Assumptions & Risks */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
                     Transparent Assumptions (Visible to Buyer)
                   </label>
                   <textarea
                     rows="3"
                     value={assumptions.join('\n')}
                     onChange={(e) => setAssumptions(e.target.value.split('\n'))}
-                    className="w-full text-xs p-2.5 border border-slate-300 rounded-lg leading-relaxed focus:border-blue-500 focus:outline-none font-mono"
+                    className="w-full text-xs p-2.5 border border-slate-700 rounded-lg leading-relaxed focus:border-blue-500 focus:outline-none font-mono"
                     placeholder="Enter one assumption per line"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
                     Identified Risk Factors & Disclosures
                   </label>
                   <textarea
                     rows="3"
                     value={riskFactors.join('\n')}
                     onChange={(e) => setRiskFactors(e.target.value.split('\n'))}
-                    className="w-full text-xs p-2.5 border border-slate-300 rounded-lg leading-relaxed focus:border-blue-500 focus:outline-none font-mono"
+                    className="w-full text-xs p-2.5 border border-slate-700 rounded-lg leading-relaxed focus:border-blue-500 focus:outline-none font-mono"
                     placeholder="Enter one risk factor per line"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1">
                   Internal / Commercial Notes
                 </label>
                 <input
@@ -489,11 +489,11 @@ export function FeasibilityStudioModal({
                   placeholder="e.g. Volume discount applied per quarterly commitments"
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full text-xs px-3 py-2 border border-slate-700 rounded-lg focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
                 <Button
                   type="button"
                   variant="outline"

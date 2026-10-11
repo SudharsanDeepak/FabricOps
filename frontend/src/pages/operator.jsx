@@ -1,45 +1,692 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Cpu,
-  Play,
-  Pause,
-  CheckCircle2,
+  Activity,
+  AlertCircle,
   AlertTriangle,
-  Wrench,
-  Clock,
-  ClipboardList,
-  Layers,
   ArrowRight,
-  TrendingUp,
-  RotateCcw,
-  Plus,
+  ArrowUpRight,
+  Boxes,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  Cpu,
+  FileText,
+  Flame,
+  Hash,
+  HelpCircle,
+  Layers,
+  Loader2,
+  LogIn,
+  LogOut,
   Minus,
+  Package,
+  Pause,
+  Play,
+  Plus,
+  Radio,
+  RefreshCw,
+  RotateCcw,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
   Sparkles,
+  TrendingUp,
+  Truck,
+  UserCheck,
   Wifi,
   WifiOff,
-  UserCheck,
-  Package,
-  Activity,
-  ShieldAlert,
-  FileText,
-  Send,
-  X,
-  Check,
-  AlertCircle,
-  HelpCircle,
-  Hash,
-  Flame,
-  ArrowUpRight,
-  RefreshCw
+  Wrench,
+  X
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
-import { api } from '../../lib/api';
-import { getSocket } from '../../lib/socket';
-import { useAuth } from '../../context/AuthContext';
-import { OperatorTaskBoardView } from './OperatorTaskBoardView';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { api } from '../lib/api';
+import { getSocket } from '../lib/socket';
+import { useAuth } from '../context/AuthContext';
 
+
+// ==========================================
+// 1. OPERATOR TASK BOARD VIEW
+// ==========================================
+export function OperatorTaskBoardView({
+  onStartJob,
+  onPauseJob,
+  onResumeJob,
+  onCompleteJob,
+  onLogMeters,
+  onReportIssue,
+  socketConnected,
+}) {
+  const [loading, setLoading] = useState(true);
+  const [boardData, setBoardData] = useState(null);
+  const [error, setError] = useState(null);
+
+  const fetchBoard = useCallback(async (quiet = false) => {
+    try {
+      if (!quiet) setLoading(true);
+      setError(null);
+      const res = await api.get('/operator/task-board');
+      if (res.success && res.data) {
+        setBoardData(res.data);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load operator task board');
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBoard();
+  }, [fetchBoard]);
+
+  // Subscribe to operator floor room for real-time live board sync
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleFloorUpdate = () => {
+      fetchBoard(true);
+    };
+
+    socket.emit('join_room', { room: 'operator_floor' });
+    socket.on('production:job_updated', handleFloorUpdate);
+    socket.on('production:log_recorded', handleFloorUpdate);
+    socket.on('machine:status_changed', handleFloorUpdate);
+    socket.on('timeline_updated', handleFloorUpdate);
+
+    return () => {
+      socket.emit('leave_room', { room: 'operator_floor' });
+      socket.off('production:job_updated', handleFloorUpdate);
+      socket.off('production:log_recorded', handleFloorUpdate);
+      socket.off('machine:status_changed', handleFloorUpdate);
+      socket.off('timeline_updated', handleFloorUpdate);
+    };
+  }, [fetchBoard]);
+
+  if (loading && !boardData) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center text-slate-400 text-xs gap-3">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        <span>Loading factory assignments, loom tasks, and active work orders...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-center text-xs text-rose-800">
+        <AlertTriangle className="h-8 w-8 text-rose-600 mx-auto mb-2" />
+        <p className="font-bold">{error}</p>
+        <Button onClick={() => fetchBoard()} size="sm" className="mt-3 bg-rose-600 hover:bg-rose-700 text-white">
+          <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry Loading Board
+        </Button>
+      </div>
+    );
+  }
+
+  const { operator, assignedMachines = [], activeWork = [], upcomingTasks = [], timelineTasks = [], floorSummary = {} } = boardData || {};
+
+  return (
+    <div className="space-y-6">
+      {/* 1. Task Board Status Header */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card className="p-4 border-slate-800 bg-[#0D1220] shadow-xs">
+          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Active Work</span>
+            <Play className="h-3.5 w-3.5 text-blue-600" />
+          </div>
+          <div className="text-2xl font-black font-mono text-white">
+            {floorSummary.activeCount ?? activeWork.length}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-0.5">Assigned running / paused jobs</p>
+        </Card>
+
+        <Card className="p-4 border-slate-800 bg-[#0D1220] shadow-xs">
+          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Assigned Looms</span>
+            <Cpu className="h-3.5 w-3.5 text-emerald-600" />
+          </div>
+          <div className="text-2xl font-black font-mono text-emerald-700">
+            {floorSummary.totalAssigned ?? assignedMachines.length}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-0.5">Online machine terminals</p>
+        </Card>
+
+        <Card className="p-4 border-slate-800 bg-[#0D1220] shadow-xs">
+          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Upcoming Queue</span>
+            <Clock className="h-3.5 w-3.5 text-amber-600" />
+          </div>
+          <div className="text-2xl font-black font-mono text-amber-700">
+            {floorSummary.pendingCount ?? upcomingTasks.length}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-0.5">Queued routing operations</p>
+        </Card>
+
+        <Card className="p-4 border-slate-800 bg-[#0D1220] shadow-xs">
+          <div className="flex items-center justify-between text-slate-400 text-xs mb-1">
+            <span className="font-semibold uppercase tracking-wider text-[10px]">Today's Output</span>
+            <TrendingUp className="h-3.5 w-3.5 text-indigo-600" />
+          </div>
+          <div className="text-2xl font-black font-mono text-indigo-700">
+            {(floorSummary.completedToday || 0).toLocaleString()} M
+          </div>
+          <p className="text-[11px] text-slate-500 mt-0.5">Recorded shift meters</p>
+        </Card>
+      </div>
+
+      {/* 2. Active Work & Current Assignments (Main requirement) */}
+      <Card className="border-slate-800 shadow-sm overflow-hidden bg-[#0D1220]">
+        <CardHeader className="bg-slate-900/60 p-4 border-b border-slate-800 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider">
+              Current Work & Active Machine Assignments
+            </CardTitle>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fetchBoard(true)}
+            className="text-xs h-7 gap-1"
+          >
+            <RefreshCw className="h-3 w-3" /> Sync Board
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4">
+          {activeWork.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              <p className="font-semibold text-slate-400">No active work orders currently assigned to your terminals.</p>
+              <p className="mt-1">Check upcoming tasks below or request assignments from the production planner.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activeWork.map((job) => {
+                const target = job.targetQuantity || 0;
+                const completed = job.completedQuantity || 0;
+                const remaining = job.remainingQuantity != null ? job.remainingQuantity : Math.max(0, target - completed);
+                const percent = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
+                const isRunning = job.status === 'RUNNING';
+                const isPaused = job.status === 'PAUSED';
+
+                return (
+                  <div
+                    key={job._id}
+                    className={`p-4 rounded-xl border transition-all text-xs ${
+                      isRunning
+                        ? 'border-blue-400 bg-[#5227FF]/15/20 shadow-xs'
+                        : isPaused
+                        ? 'border-amber-300 bg-amber-50/20'
+                        : 'border-slate-800 bg-[#0D1220]'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-white font-mono text-sm">
+                            {job.jobNumber || 'WO-JOB'}
+                          </span>
+                          <span className="text-slate-400 font-mono text-xs">
+                            Order: {job.orderId?.orderNumber || 'SALES-ORDER'}
+                          </span>
+                          <Badge
+                            className={`text-[10px] font-mono ${
+                              isRunning
+                                ? 'bg-emerald-600 text-white animate-pulse'
+                                : isPaused
+                                ? 'bg-amber-600 text-white'
+                                : 'bg-slate-200 text-slate-300'
+                            }`}
+                          >
+                            {job.status}
+                          </Badge>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1 font-medium">
+                          Fabric: <strong className="text-slate-200">{job.fabricSpecification?.fabricName || 'Oxford Woven Cotton'}</strong> &bull; {job.fabricSpecification?.gsm || 180} GSM &bull; {job.fabricSpecification?.weaveType || 'PLAIN'} &bull; {job.fabricSpecification?.color || 'Bleached'}
+                        </p>
+                      </div>
+
+                      {/* Machine Badge */}
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs font-mono bg-[#0D1220]">
+                          <Cpu className="h-3 w-3 mr-1 text-blue-600" />
+                          Loom: {job.machineId?.machineCode || 'LOOM-01'}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs font-mono">
+                          {job.stage || 'WEAVING'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Quantities & Progress */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 border-b border-slate-100 font-mono text-xs">
+                      <div>
+                        <span className="text-slate-400 text-[10px] block font-sans uppercase">Target Quantity</span>
+                        <span className="font-bold text-white">{target.toLocaleString()} M</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block font-sans uppercase">Completed</span>
+                        <span className="font-bold text-emerald-700">{completed.toLocaleString()} M</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block font-sans uppercase">Remaining</span>
+                        <span className="font-bold text-[#FF9FFC]">{remaining.toLocaleString()} M</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] block font-sans uppercase">Next Process</span>
+                        <span className="font-sans font-semibold text-slate-200">
+                          {job.nextProcess || 'DYEING & FINISHING'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar & Actions */}
+                    <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1 sm:w-1/2">
+                        <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                          <span>Job Progress</span>
+                          <span className="font-bold text-slate-200">{percent}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-600 rounded-full transition-all"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {job.status === 'PENDING' && (
+                          <Button
+                            size="sm"
+                            onClick={() => onStartJob(job)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 gap-1 shadow-xs"
+                          >
+                            <Play className="h-3.5 w-3.5" /> Start Task
+                          </Button>
+                        )}
+                        {isRunning && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => onPauseJob(job)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 gap-1 shadow-xs"
+                            >
+                              <Pause className="h-3.5 w-3.5" /> Pause
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => onLogMeters(job)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1 shadow-xs"
+                            >
+                              <Plus className="h-3.5 w-3.5" /> Record Meters
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => onCompleteJob(job)}
+                              className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 gap-1 shadow-xs"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Finish Job
+                            </Button>
+                          </>
+                        )}
+                        {isPaused && (
+                          <Button
+                            size="sm"
+                            onClick={() => onResumeJob(job)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 gap-1 shadow-xs"
+                          >
+                            <Play className="h-3.5 w-3.5" /> Resume Task
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. Manufacturing Stages & Order Timeline Tasks */}
+      {timelineTasks.length > 0 && (
+        <Card className="border-slate-800 shadow-sm bg-[#0D1220] overflow-hidden">
+          <CardHeader className="bg-slate-900/60 p-4 border-b border-slate-800">
+            <CardTitle className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Activity className="h-4 w-4 text-emerald-600" />
+              <span>Department Manufacturing Stage Assignments</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              {timelineTasks.map((t, idx) => (
+                <div
+                  key={t._id || idx}
+                  className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white font-mono text-sm">
+                        {t.stage?.replace('_', ' ')}
+                      </span>
+                      <span className="text-slate-400 font-mono">
+                        Order #{t.orderId?.orderNumber || 'ORDER'}
+                      </span>
+                      <Badge
+                        className={`text-[10px] ${
+                          t.status === 'COMPLETED'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : t.status === 'IN_PROGRESS'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-slate-100 text-slate-400'
+                        }`}
+                      >
+                        {t.status}
+                      </Badge>
+                      {t.isDelayed && (
+                        <Badge className="bg-rose-600 text-white text-[10px]">
+                          DELAY RISK
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-3 font-mono">
+                      <span>Target: {t.targetQuantity?.toLocaleString()} {t.unit}</span>
+                      <span>&bull;</span>
+                      <span>Produced: {t.completedQuantity?.toLocaleString()} {t.unit}</span>
+                      {t.responsibleMachine && (
+                        <>
+                          <span>&bull;</span>
+                          <span>Machine: {t.responsibleMachine}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {t.isDelayed && t.delayReason && (
+                    <div className="text-rose-700 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 text-[11px]">
+                      <strong>Delay:</strong> {t.delayReason}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 4. Upcoming Tasks & Loom Health Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upcoming Tasks */}
+        <Card className="border-slate-800 shadow-sm bg-[#0D1220]">
+          <CardHeader className="bg-slate-900/60 p-4 border-b border-slate-800">
+            <CardTitle className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <span>Upcoming Task Routing Queue ({upcomingTasks.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {upcomingTasks.length === 0 ? (
+              <p className="text-slate-400 text-xs py-4 text-center">No upcoming tasks queued in your work center.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {upcomingTasks.map((task) => (
+                  <div
+                    key={task._id}
+                    className="p-3 rounded-lg border border-slate-800 bg-[#0D1220] flex items-center justify-between text-xs hover:border-slate-700"
+                  >
+                    <div>
+                      <span className="font-mono font-bold text-slate-200">{task.jobNumber || 'TASK'}</span>
+                      <p className="text-[11px] text-slate-500">
+                        {task.fabricSpecification?.fabricName || 'Standard Plain Weave'} &bull; {task.targetQuantity?.toLocaleString()} M
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      QUEUED
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Assigned Machines Snapshot */}
+        <Card className="border-slate-800 shadow-sm bg-[#0D1220]">
+          <CardHeader className="bg-slate-900/60 p-4 border-b border-slate-800">
+            <CardTitle className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-blue-600" />
+              <span>Assigned Machine Telemetry Status</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {assignedMachines.length === 0 ? (
+              <p className="text-slate-400 text-xs py-4 text-center">No looms assigned to this terminal.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {assignedMachines.map((m) => (
+                  <div
+                    key={m._id}
+                    className="p-3 rounded-lg border border-slate-800 bg-[#0D1220] flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-white">{m.machineCode}</span>
+                        <span className="text-slate-500 text-[11px]">{m.name}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Picks: {m.telemetrySnapshot?.picksPerMinute || 0} ppm &bull; Efficiency: {m.telemetrySnapshot?.efficiencyPercentage || 0}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={`text-[10px] ${
+                          m.status === 'RUNNING'
+                            ? 'bg-emerald-600 text-white'
+                            : m.status === 'BREAKDOWN'
+                            ? 'bg-rose-600 text-white'
+                            : 'bg-amber-500 text-white'
+                        }`}
+                      >
+                        {m.status}
+                      </Badge>
+                      {m.status === 'RUNNING' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onReportIssue(m._id)}
+                          className="text-[10px] h-6 px-1.5 text-rose-600 hover:bg-rose-50"
+                        >
+                          Report Fault
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 1.B. OPERATOR ATTENDANCE & TIMESHEET VIEW
+// ==========================================
+export function OperatorAttendanceTimesheetView({ attendance, isClockedIn, onClockToggle, clockLoading }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTimesheet = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/operator/attendance');
+      if (res.success && res.data) {
+        setData(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load timesheet:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTimesheet();
+  }, [fetchTimesheet]);
+
+  return (
+    <div className="space-y-4">
+      {/* Punch Clock Card */}
+      <div className="p-5 rounded-2xl bg-[#0D1220] border border-slate-800/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isClockedIn ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-300'}`}>
+            <Clock className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold text-white text-base">Terminal Punch Clock</h3>
+              <Badge className={isClockedIn ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-300'}>
+                {isClockedIn ? 'CLOCKED IN' : 'CLOCKED OUT'}
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {attendance?.checkInTime
+                ? `Clocked in at ${new Date(attendance.checkInTime).toLocaleTimeString('en-US')}`
+                : 'Not clocked in yet today'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={onClockToggle}
+            disabled={clockLoading}
+            className={`min-h-[44px] px-6 font-bold text-xs rounded-xl shadow-md ${
+              isClockedIn
+                ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/30'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30'
+            }`}
+          >
+            {clockLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : isClockedIn ? (
+              <LogOut className="h-4 w-4 mr-2" />
+            ) : (
+              <LogIn className="h-4 w-4 mr-2" />
+            )}
+            {isClockedIn ? 'Clock Out of Floor' : 'Clock In to Floor'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Timesheet Summary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-4 rounded-xl bg-[#0D1220] border border-slate-800/80 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Recorded Shifts</span>
+          <span className="text-2xl font-black text-white font-mono mt-0.5 block">
+            {data?.summary?.totalRecords || 0}
+          </span>
+          <span className="text-xs text-slate-500 font-medium">Last 30 Calendar Days</span>
+        </div>
+        <div className="p-4 rounded-xl bg-[#0D1220] border border-slate-800/80 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Work Hours</span>
+          <span className="text-2xl font-black text-blue-600 font-mono mt-0.5 block">
+            {data?.summary?.totalHoursWorked || 0} hrs
+          </span>
+          <span className="text-xs text-slate-500 font-medium">Logged Floor Time</span>
+        </div>
+        <div className="p-4 rounded-xl bg-[#0D1220] border border-slate-800/80 shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Overtime Hours</span>
+          <span className="text-2xl font-black text-emerald-600 font-mono mt-0.5 block">
+            +{data?.summary?.totalOvertime || 0} hrs
+          </span>
+          <span className="text-xs text-slate-500 font-medium">Beyond 8h Standard Shift</span>
+        </div>
+      </div>
+
+      {/* History Table */}
+      <div className="bg-[#0D1220] rounded-2xl border border-slate-800/90 shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Punch Log History (30 Days)</h4>
+          <Button variant="ghost" size="sm" onClick={fetchTimesheet} className="h-7 text-xs">
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="py-12 flex justify-center text-slate-400">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          </div>
+        ) : !data?.records || data.records.length === 0 ? (
+          <div className="py-12 text-center text-slate-400 text-xs font-medium">
+            No punch logs found for your account.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#090D17] text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800/80">
+                <tr>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-3">Shift</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Check-In</th>
+                  <th className="py-3 px-3">Check-Out</th>
+                  <th className="py-3 px-3">Regular Hours</th>
+                  <th className="py-3 px-3">Overtime</th>
+                  <th className="py-3 px-4">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium font-mono text-[11px]">
+                {data.records.map((r) => (
+                  <tr key={r._id} className="hover:bg-slate-900/60/70">
+                    <td className="py-3 px-4 font-sans font-bold text-slate-200">
+                      {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="py-3 px-3 font-sans font-semibold text-slate-400">
+                      {r.shiftId?.name || 'MORNING'}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-sans ${
+                        r.status === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-slate-300">
+                      {r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </td>
+                    <td className="py-3 px-3 text-slate-300">
+                      {r.checkOutTime ? new Date(r.checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </td>
+                    <td className="py-3 px-3 font-bold text-white">{r.hoursWorked || 0} hrs</td>
+                    <td className="py-3 px-3 text-emerald-700 font-bold">
+                      {r.overtimeHours > 0 ? `+${r.overtimeHours}h` : '—'}
+                    </td>
+                    <td className="py-3 px-4 font-sans text-slate-500 italic max-w-xs truncate">
+                      {r.remarks || '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 2. OPERATOR DASHBOARD PAGE
+// ==========================================
 export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSection }) {
   const { user, profile } = useAuth();
   const [activeViewTab, setActiveViewTab] = useState(activeTab || 'my-machines');
@@ -579,6 +1226,8 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                   setActiveViewTab('task-board');
                 } else if (tab.id === 'my-machines') {
                   setActiveViewTab('my-machines');
+                } else if (tab.id === 'attendance') {
+                  setActiveViewTab('attendance');
                 } else if (tab.id === 'shift-log') {
                   openProdLogModal();
                 } else if (tab.id === 'breakdowns') {
@@ -592,7 +1241,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all min-h-[64px] ${
                 isActive
                   ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 font-bold'
-                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80 font-semibold'
+                  : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800 font-semibold'
               }`}
             >
               <div className="flex items-center gap-1.5 mb-1">
@@ -602,7 +1251,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               {tab.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
-                    tab.badgeColor || (isActive ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600')
+                    tab.badgeColor || (isActive ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400')
                   }`}
                 >
                   {tab.badge}
@@ -623,12 +1272,19 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
           onReportIssue={(mId) => setBreakdownModal({ open: true, machineId: mId })}
           socketConnected={socketConnected}
         />
+      ) : activeViewTab === 'attendance' ? (
+        <OperatorAttendanceTimesheetView
+          attendance={attendance}
+          isClockedIn={isClockedIn}
+          onClockToggle={handleClockToggle}
+          clockLoading={clockLoading}
+        />
       ) : (
         <>
           {/* 3. Assigned Machine Selection Pills (Large Touch Targets) */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-[#0D1220] p-4 rounded-2xl border border-slate-800 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
             <Cpu className="h-4 w-4 text-blue-600" />
             <span>Select Machine Fleet</span>
           </h2>
@@ -647,14 +1303,14 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                 onClick={() => setSelectedMachineId(m._id)}
                 className={`cursor-pointer rounded-xl border-2 p-4 transition-all relative overflow-hidden ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-50/30 shadow-md ring-2 ring-blue-500/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-blue-600 bg-[#5227FF]/15/30 shadow-md ring-2 ring-blue-500/20'
+                    : 'border-slate-800 bg-[#0D1220] hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-base text-slate-900 tracking-tight">{m.machineCode}</span>
+                      <span className="font-extrabold text-base text-white tracking-tight">{m.machineCode}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${theme.badge}`}>
                         {m.status}
                       </span>
@@ -670,11 +1326,11 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                 <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center font-mono">
                   <div>
                     <span className="text-[10px] text-slate-400 block uppercase">Picks/min</span>
-                    <span className="text-sm font-black text-slate-800">{m.telemetrySnapshot?.picksPerMinute || 0}</span>
+                    <span className="text-sm font-black text-slate-200">{m.telemetrySnapshot?.picksPerMinute || 0}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block uppercase">RPM</span>
-                    <span className="text-sm font-black text-slate-800">{m.telemetrySnapshot?.rpm || 0}</span>
+                    <span className="text-sm font-black text-slate-200">{m.telemetrySnapshot?.rpm || 0}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block uppercase">Efficiency</span>
@@ -694,7 +1350,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Active Job Card */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-slate-200 shadow-md rounded-2xl overflow-hidden bg-white">
+            <Card className="border-slate-800 shadow-md rounded-2xl overflow-hidden bg-[#0D1220]">
               <CardHeader className="bg-slate-900 text-white p-5 border-b border-slate-800">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -730,9 +1386,9 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                 {activeJobForSelectedMachine ? (
                   <>
                     {/* Fabric Specifications Snapshot */}
-                    <div className="rounded-xl bg-slate-50 border border-slate-200/90 p-4 space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-                        <span className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="rounded-xl bg-slate-900/60 border border-slate-800/90 p-4 space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                           <Package className="h-4 w-4 text-blue-600" />
                           <span>Fabric Specification Details</span>
                         </span>
@@ -742,34 +1398,34 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/60">
+                        <div className="bg-[#0D1220] p-2.5 rounded-lg border border-slate-800/60">
                           <span className="text-[10px] text-slate-400 uppercase font-semibold block">Density (GSM)</span>
-                          <span className="font-bold text-slate-800 text-sm">{activeJobForSelectedMachine.fabricSpecs?.gsm} GSM</span>
+                          <span className="font-bold text-slate-200 text-sm">{activeJobForSelectedMachine.fabricSpecs?.gsm} GSM</span>
                         </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/60">
+                        <div className="bg-[#0D1220] p-2.5 rounded-lg border border-slate-800/60">
                           <span className="text-[10px] text-slate-400 uppercase font-semibold block">Weave Pattern</span>
-                          <span className="font-bold text-slate-800 text-sm">{activeJobForSelectedMachine.fabricSpecs?.weaveType}</span>
+                          <span className="font-bold text-slate-200 text-sm">{activeJobForSelectedMachine.fabricSpecs?.weaveType}</span>
                         </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/60">
+                        <div className="bg-[#0D1220] p-2.5 rounded-lg border border-slate-800/60">
                           <span className="text-[10px] text-slate-400 uppercase font-semibold block">Yarn Warp/Weft</span>
-                          <span className="font-bold text-slate-800 text-xs truncate block">
+                          <span className="font-bold text-slate-200 text-xs truncate block">
                             {activeJobForSelectedMachine.fabricSpecs?.yarnCountWarp} x {activeJobForSelectedMachine.fabricSpecs?.yarnCountWeft}
                           </span>
                         </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/60">
+                        <div className="bg-[#0D1220] p-2.5 rounded-lg border border-slate-800/60">
                           <span className="text-[10px] text-slate-400 uppercase font-semibold block">Width / Reed</span>
-                          <span className="font-bold text-slate-800 text-sm">{activeJobForSelectedMachine.fabricSpecs?.widthInches}" Inches</span>
+                          <span className="font-bold text-slate-200 text-sm">{activeJobForSelectedMachine.fabricSpecs?.widthInches}" Inches</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Quantity Progress Tracker */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-300">
                         <span>Production Output Progress</span>
                         <span className="text-blue-600 font-mono text-sm">{activeJobForSelectedMachine.progressPercentage}%</span>
                       </div>
-                      <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/80">
+                      <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-800/80">
                         <div
                           className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 rounded-full transition-all duration-500"
                           style={{ width: `${Math.min(100, activeJobForSelectedMachine.progressPercentage)}%` }}
@@ -777,9 +1433,9 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                       </div>
 
                       <div className="grid grid-cols-3 gap-3 pt-2 text-center">
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                        <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                           <span className="text-[10px] text-slate-400 uppercase font-bold block">Target</span>
-                          <span className="font-black text-slate-900 text-base">
+                          <span className="font-black text-white text-base">
                             {activeJobForSelectedMachine.targetQuantity?.toLocaleString()} m
                           </span>
                         </div>
@@ -799,7 +1455,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     </div>
 
                     {/* Next Process Banner */}
-                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-900">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#5227FF]/15/80 border border-[#5227FF]/40 text-xs text-blue-900">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-blue-600" />
                         <span>Next Production Stage:</span>
@@ -915,7 +1571,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               <button
                 onClick={() => openProdLogModal(activeJobForSelectedMachine)}
                 disabled={!activeJobForSelectedMachine}
-                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/20 text-slate-800 font-bold text-sm shadow-sm transition-all disabled:opacity-50 min-h-[52px]"
+                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-[#0D1220] border border-slate-800 hover:border-blue-500 hover:bg-[#5227FF]/15/20 text-slate-200 font-bold text-sm shadow-sm transition-all disabled:opacity-50 min-h-[52px]"
               >
                 <ClipboardList className="h-5 w-5 text-blue-600" />
                 <span>Log Production Output</span>
@@ -923,7 +1579,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               <button
                 onClick={() => setBreakdownModal({ open: true, machineId: selectedMachine._id })}
-                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-white border border-slate-200 hover:border-rose-500 hover:bg-rose-50/20 text-slate-800 font-bold text-sm shadow-sm transition-all min-h-[52px]"
+                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-[#0D1220] border border-slate-800 hover:border-rose-500 hover:bg-rose-50/20 text-slate-200 font-bold text-sm shadow-sm transition-all min-h-[52px]"
               >
                 <AlertTriangle className="h-5 w-5 text-rose-600" />
                 <span>Report Breakdown / Help</span>
@@ -931,7 +1587,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               <button
                 onClick={() => setHandoverModal({ open: true, machineId: selectedMachine._id })}
-                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-white border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/20 text-slate-800 font-bold text-sm shadow-sm transition-all min-h-[52px]"
+                className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-[#0D1220] border border-slate-800 hover:border-indigo-500 hover:bg-indigo-50/20 text-slate-200 font-bold text-sm shadow-sm transition-all min-h-[52px]"
               >
                 <Layers className="h-5 w-5 text-indigo-600" />
                 <span>Shift Handover Notes</span>
@@ -942,9 +1598,9 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
           {/* Right Column: Live Telemetry & Recent Logs */}
           <div className="space-y-6">
             {/* Machine Specs & Live Telemetry Card */}
-            <Card className="border-slate-200 shadow-sm rounded-2xl bg-white">
+            <Card className="border-slate-800 shadow-sm rounded-2xl bg-[#0D1220]">
               <CardHeader className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-600" />
                   <span>Telemetry & Sensor Hub</span>
                 </CardTitle>
@@ -955,15 +1611,15 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">Picks / Min</span>
-                    <span className="font-black text-slate-900 text-xl font-mono">
+                    <span className="font-black text-white text-xl font-mono">
                       {selectedMachine.telemetrySnapshot?.picksPerMinute || 0}
                     </span>
                   </div>
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                  <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
                     <span className="text-[10px] text-slate-400 uppercase font-bold block">Current RPM</span>
-                    <span className="font-black text-slate-900 text-xl font-mono">
+                    <span className="font-black text-white text-xl font-mono">
                       {selectedMachine.telemetrySnapshot?.rpm || 0}
                     </span>
                   </div>
@@ -972,28 +1628,28 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between text-slate-500">
                     <span>Loom Type</span>
-                    <b className="text-slate-800 font-medium">{selectedMachine.type}</b>
+                    <b className="text-slate-200 font-medium">{selectedMachine.type}</b>
                   </div>
                   <div className="flex justify-between text-slate-500">
                     <span>Location</span>
-                    <b className="text-slate-800 font-medium">{selectedMachine.location?.shed} / {selectedMachine.location?.bay}</b>
+                    <b className="text-slate-200 font-medium">{selectedMachine.location?.shed} / {selectedMachine.location?.bay}</b>
                   </div>
                   <div className="flex justify-between text-slate-500">
                     <span>Total Run Hours</span>
-                    <b className="text-slate-800 font-mono font-medium">{selectedMachine.totalRunHours || 0} hrs</b>
+                    <b className="text-slate-200 font-mono font-medium">{selectedMachine.totalRunHours || 0} hrs</b>
                   </div>
                   <div className="flex justify-between text-slate-500">
                     <span>Reed Space</span>
-                    <b className="text-slate-800 font-medium">{selectedMachine.specifications?.reedSpaceInches || 75}" Inches</b>
+                    <b className="text-slate-200 font-medium">{selectedMachine.specifications?.reedSpaceInches || 75}" Inches</b>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Recent Output Logs */}
-            <Card className="border-slate-200 shadow-sm rounded-2xl bg-white">
+            <Card className="border-slate-800 shadow-sm rounded-2xl bg-[#0D1220]">
               <CardHeader className="p-4 border-b border-slate-100">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center justify-between">
+                <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                   <span>Recent Shift Output Logs</span>
                   <span className="text-[10px] text-slate-400 font-normal">Last 5 submissions</span>
                 </CardTitle>
@@ -1004,11 +1660,11 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                   dashboardData.recentLogs.slice(0, 5).map((log) => (
                     <div
                       key={log._id}
-                      className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs flex items-center justify-between"
+                      className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/60 text-xs flex items-center justify-between"
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-slate-900">+{log.metersProduced}m</span>
+                          <span className="font-extrabold text-white">+{log.metersProduced}m</span>
                           <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-blue-100 text-blue-800">
                             {log.shift}
                           </span>
@@ -1041,7 +1697,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
       {/* 5. Production Output Modal (Large Touch Controls & Touch Stepper) */}
       {prodLogModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-lg rounded-2xl bg-[#0D1220] shadow-2xl border border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="p-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-blue-400" />
@@ -1057,8 +1713,8 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
             <form onSubmit={handleSubmitProdLog} className="p-6 overflow-y-auto space-y-5">
               {/* Job & Machine Identification */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <p className="font-bold text-slate-800">
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
+                <p className="font-bold text-slate-200">
                   Job: <span className="text-blue-600 font-mono">{prodLogModal.job?.jobNumber}</span> (Order: {prodLogModal.job?.orderNumber})
                 </p>
                 <p className="text-slate-500 mt-0.5">
@@ -1068,14 +1724,14 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               {/* Large Touch Stepper for Meters Produced */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                   Meters Produced (Floor Meter Counter)
                 </label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setProdForm((prev) => ({ ...prev, metersProduced: Math.max(0, Number(prev.metersProduced) - 50) }))}
-                    className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-xl flex items-center justify-center text-slate-700 active:scale-95 transition-all"
+                    className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-xl flex items-center justify-center text-slate-300 active:scale-95 transition-all"
                   >
                     <Minus className="h-5 w-5" />
                   </button>
@@ -1085,12 +1741,12 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     required
                     value={prodForm.metersProduced}
                     onChange={(e) => setProdForm({ ...prodForm, metersProduced: Number(e.target.value) })}
-                    className="flex-1 h-12 text-center text-2xl font-black font-mono rounded-xl border-2 border-slate-300 focus:border-blue-600 focus:outline-none"
+                    className="flex-1 h-12 text-center text-2xl font-black font-mono rounded-xl border-2 border-slate-700 focus:border-blue-600 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setProdForm((prev) => ({ ...prev, metersProduced: Number(prev.metersProduced) + 50 }))}
-                    className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-xl flex items-center justify-center text-slate-700 active:scale-95 transition-all"
+                    className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-slate-200 font-black text-xl flex items-center justify-center text-slate-300 active:scale-95 transition-all"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
@@ -1103,7 +1759,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                       key={preset}
                       type="button"
                       onClick={() => setProdForm((prev) => ({ ...prev, metersProduced: Number(prev.metersProduced) + preset }))}
-                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-300"
                     >
                       +{preset}m
                     </button>
@@ -1114,24 +1770,24 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               {/* Duration & Downtime */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Run Duration (Min)</label>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">Run Duration (Min)</label>
                   <input
                     type="number"
                     min="1"
                     required
                     value={prodForm.durationMinutes}
                     onChange={(e) => setProdForm({ ...prodForm, durationMinutes: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 font-mono text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Downtime (Min)</label>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">Downtime (Min)</label>
                   <input
                     type="number"
                     min="0"
                     value={prodForm.downtimeMinutes}
                     onChange={(e) => setProdForm({ ...prodForm, downtimeMinutes: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 font-mono text-sm"
                   />
                 </div>
               </div>
@@ -1139,21 +1795,21 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               {/* Waste Quantity & Shift */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Waste / Scrap (Meters)</label>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">Waste / Scrap (Meters)</label>
                   <input
                     type="number"
                     min="0"
                     value={prodForm.wasteMeters}
                     onChange={(e) => setProdForm({ ...prodForm, wasteMeters: Number(e.target.value) })}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono text-sm"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 font-mono text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Shift</label>
+                  <label className="block text-xs font-bold text-slate-400 mb-1">Shift</label>
                   <select
                     value={prodForm.shift}
                     onChange={(e) => setProdForm({ ...prodForm, shift: e.target.value })}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 text-sm font-semibold"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 text-sm font-semibold"
                   >
                     <option value="MORNING">MORNING (06:00 - 14:00)</option>
                     <option value="EVENING">EVENING (14:00 - 22:00)</option>
@@ -1172,7 +1828,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                   <p className="text-[11px] text-amber-700 leading-relaxed">
                     Output exceeds remaining target ({prodLogModal.job.remainingQuantity}m). Business rules require an authorized supervisor exception reason.
                   </p>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 pt-1 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-200 pt-1 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={prodForm.overrunAuthorized}
@@ -1187,7 +1843,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                       placeholder="Reason (e.g., Authorized extra 5% allowance for buyer sample cuttings)"
                       value={prodForm.overrunReason}
                       onChange={(e) => setProdForm({ ...prodForm, overrunReason: e.target.value })}
-                      className="w-full h-9 px-3 rounded-lg border border-amber-300 bg-white text-xs mt-1"
+                      className="w-full h-9 px-3 rounded-lg border border-amber-500/40 bg-slate-900 text-slate-200 text-xs mt-1"
                     />
                   )}
                 </div>
@@ -1195,17 +1851,17 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               {/* Remarks */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Floor Notes / Remarks</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Floor Notes / Remarks</label>
                 <input
                   type="text"
                   placeholder="e.g., Optimal tension at 850 RPM, no slub defects observed"
                   value={prodForm.remarks}
                   onChange={(e) => setProdForm({ ...prodForm, remarks: e.target.value })}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-xs"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-700 text-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -1229,7 +1885,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
       {/* 6. Machine Breakdown & Needs Modal */}
       {breakdownModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-lg rounded-2xl bg-[#0D1220] shadow-2xl border border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="p-4 bg-rose-600 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
@@ -1245,7 +1901,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
             <form onSubmit={handleSubmitBreakdown} className="p-6 overflow-y-auto space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                   Issue Classification
                 </label>
                 <div className="grid grid-cols-2 gap-2 text-xs">
@@ -1264,7 +1920,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                       className={`p-2.5 rounded-lg border text-left font-semibold transition-all ${
                         breakdownForm.breakdownType === item.id
                           ? 'border-rose-600 bg-rose-50 text-rose-900 ring-2 ring-rose-500/20'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                          : 'border-slate-800 bg-[#0D1220] text-slate-300 hover:bg-slate-900/60'
                       }`}
                     >
                       {item.label}
@@ -1324,7 +1980,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               {/* Severity */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Severity Level</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Severity Level</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['LOW', 'MEDIUM', 'CRITICAL'].map((s) => (
                     <button
@@ -1336,7 +1992,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                           ? s === 'CRITICAL'
                             ? 'bg-rose-600 text-white border-rose-600'
                             : 'bg-amber-500 text-white border-amber-500'
-                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                          : 'bg-slate-100 text-slate-300 border-slate-800'
                       }`}
                     >
                       {s}
@@ -1347,18 +2003,18 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Issue Description & Location Note</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1">Issue Description & Location Note</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Describe the breakdown, noise, or reason for machine stop..."
                   value={breakdownForm.description}
                   onChange={(e) => setBreakdownForm({ ...breakdownForm, description: e.target.value })}
-                  className="w-full p-3 rounded-lg border border-slate-300 text-xs focus:outline-none focus:border-rose-500"
+                  className="w-full p-3 rounded-lg border border-slate-700 text-xs focus:outline-none focus:border-rose-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -1382,7 +2038,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
       {/* 7. Shift Handover Modal */}
       {handoverModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-lg rounded-2xl bg-[#0D1220] shadow-2xl border border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="p-4 bg-indigo-900 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-indigo-400" />
@@ -1399,14 +2055,14 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
             <form onSubmit={handleSubmitHandover} className="p-6 overflow-y-auto space-y-4 text-xs">
               {/* Incoming Operator Selection */}
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">
+                <label className="block font-bold text-slate-300 uppercase mb-1">
                   Incoming Shift Operator
                 </label>
                 <select
                   required
                   value={handoverForm.incomingOperatorId}
                   onChange={(e) => setHandoverForm({ ...handoverForm, incomingOperatorId: e.target.value })}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 text-xs font-semibold"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-700 text-xs font-semibold"
                 >
                   <option value="">Select Relieving Operator...</option>
                   {dashboardData?.availableOperators
@@ -1422,7 +2078,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               {/* Running Meter Reading & Warp Beam % */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Meters Running on Loom</label>
+                  <label className="block font-bold text-slate-300 mb-1">Meters Running on Loom</label>
                   <input
                     type="number"
                     min="0"
@@ -1431,11 +2087,11 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     onChange={(e) =>
                       setHandoverForm({ ...handoverForm, metersRunningAtHandover: Number(e.target.value) })
                     }
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Remaining Warp Beam %</label>
+                  <label className="block font-bold text-slate-300 mb-1">Remaining Warp Beam %</label>
                   <input
                     type="number"
                     min="0"
@@ -1444,14 +2100,14 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     onChange={(e) =>
                       setHandoverForm({ ...handoverForm, remainingWarpBeamPercentage: Number(e.target.value) })
                     }
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 font-mono"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-700 font-mono"
                   />
                 </div>
               </div>
 
               {/* Open Issues Checklist */}
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1.5">
+                <label className="block font-bold text-slate-300 uppercase mb-1.5">
                   Open Issues & Handover Flags
                 </label>
                 <div className="space-y-1.5">
@@ -1465,7 +2121,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     return (
                       <label
                         key={issue}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer font-medium"
+                        className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800 cursor-pointer font-medium"
                       >
                         <input
                           type="checkbox"
@@ -1494,17 +2150,17 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
 
               {/* Handover Notes */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Outgoing Operator Notes</label>
+                <label className="block font-bold text-slate-300 mb-1">Outgoing Operator Notes</label>
                 <textarea
                   rows={2}
                   placeholder="Notes for the incoming operator regarding loom performance..."
                   value={handoverForm.outgoingNotes}
                   onChange={(e) => setHandoverForm({ ...handoverForm, outgoingNotes: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                  className="w-full p-2.5 rounded-lg border border-slate-700 text-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -1528,7 +2184,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
       {/* 8. Task Transition Confirmation Modal */}
       {transitionModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#0D1220] shadow-2xl border border-slate-800 p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-bold ${
@@ -1537,7 +2193,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                     : transitionModal.action === 'PAUSE'
                     ? 'bg-amber-100 text-amber-700'
                     : transitionModal.action === 'RESUME'
-                    ? 'bg-blue-100 text-blue-700'
+                    ? 'bg-blue-100 text-[#FF9FFC]'
                     : 'bg-purple-100 text-purple-700'
                 }`}
               >
@@ -1547,7 +2203,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
                 {transitionModal.action === 'COMPLETE' && <CheckCircle2 className="h-6 w-6" />}
               </div>
               <div>
-                <h3 className="font-extrabold text-slate-900 text-base">
+                <h3 className="font-extrabold text-white text-base">
                   Confirm {transitionModal.action} Operation
                 </h3>
                 <p className="text-xs text-slate-500 font-mono">
@@ -1556,7 +2212,7 @@ export function OperatorDashboardPage({ activeTab = 'my-machines', onNavigateSec
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <p className="text-xs text-slate-400 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800">
               {transitionModal.action === 'START' &&
                 'Starting this task will change the machine state to RUNNING and log you as the active operator on the telemetry hub.'}
               {transitionModal.action === 'PAUSE' &&

@@ -1,36 +1,62 @@
-export { User } from './User.js';
-export { CustomerProfile } from './CustomerProfile.js';
-export { OperatorProfile } from './OperatorProfile.js';
-export { RolePermission } from './RolePermission.js';
+// ==========================================
+// FABRICOPS CONSOLIDATED DOMAIN MODELS REGISTRY
+// ==========================================
+
+// 1. Core User & Identity
+export {
+  User,
+  CustomerProfile,
+  OperatorProfile,
+  RolePermission,
+  Attendance,
+  WageCalculation,
+  AuditLog,
+} from './User.js';
+
+// 2. Product Catalog & Fabric Specifications
 export { Product } from './Product.js';
-export { Supplier } from './Supplier.js';
+
+// 3. Procurement, Suppliers & Purchase Requests
+export {
+  Supplier,
+  PurchaseRequest,
+  PurchaseOrder,
+} from './PurchaseOrder.js';
+
+// 4. Inventory, Stock Movements & Material Batches
 export { InventoryItem } from './InventoryItem.js';
 export { YarnBatch } from './YarnBatch.js';
-export { PurchaseOrder } from './PurchaseOrder.js';
 export { GoodsReceipt } from './GoodsReceipt.js';
 export { StockMovement } from './StockMovement.js';
-export { OrderRequest } from './OrderRequest.js';
-export { Quotation } from './Quotation.js';
-export { Order } from './Order.js';
+export { FabricRoll } from './FabricRoll.js';
+export { FinishedGoodsInventory } from './FinishedGoodsInventory.js';
+export { Dispatch } from './Dispatch.js';
+
+// 5. Orders, Customer Inquiries, Messages & Tracking
+export {
+  Order,
+  OrderRequest,
+  OrderMessage,
+  OrderTimelineEvent,
+} from './Order.js';
+
+// 6. Quotations, Invoicing, Costing & Payments
+export {
+  Quotation,
+  ManufacturingCost,
+  Invoice,
+  CustomerPayment,
+} from './Quotation.js';
+
+// 7. Plant Machines & Manufacturing Operations
 export { Machine } from './Machine.js';
 export { ProductionPlan } from './ProductionPlan.js';
 export { ProductionJob } from './ProductionJob.js';
 export { ProductionLog } from './ProductionLog.js';
 export { ShiftHandover } from './ShiftHandover.js';
 export { BreakdownReport } from './BreakdownReport.js';
-export { FabricRoll } from './FabricRoll.js';
 export { QualityInspection } from './QualityInspection.js';
-export { FinishedGoodsInventory } from './FinishedGoodsInventory.js';
-export { Dispatch } from './Dispatch.js';
-export { Invoice } from './Invoice.js';
 export { Shift } from './Shift.js';
-export { Attendance } from './Attendance.js';
-export { WageCalculation } from './WageCalculation.js';
-export { ManufacturingCost } from './ManufacturingCost.js';
-export { CustomerPayment } from './CustomerPayment.js';
-export { Notification } from './Notification.js';
-export { AuditLog } from './AuditLog.js';
-export { OrderMessage } from './OrderMessage.js';
-export { PurchaseRequest } from './PurchaseRequest.js';
-export { OrderTimelineEvent } from './OrderTimelineEvent.js';
 
+// 8. Notifications
+export { Notification } from './Notification.js';

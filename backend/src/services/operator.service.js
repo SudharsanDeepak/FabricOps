@@ -895,3 +895,475 @@ export async function clockAttendance({ action, shiftId, remarks, actorUser }) {
 
   return record;
 }
+
+// ==========================================
+// 8. FACTORY WORKER ATTENDANCE MANAGEMENT
+// ==========================================
+
+/**
+ * Normalizes any input date string or Date object to UTC midnight (00:00:00.000Z).
+ * Ensures consistency across timezones and prevents duplicate records.
+ */
+export function normalizeDateToUTC(dateInput) {
+  if (!dateInput) {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  }
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [y, m, d] = dateInput.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+  }
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) {
+    throw new Error('Invalid date provided');
+  }
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+}
+
+/**
+ * Get comprehensive attendance dashboard summary for a specific date.
+ * Returns total workers, present, absent, on leave, half-day, attendance rate, and working hours.
+ */
+export async function getAttendanceDashboardSummary(dateStr) {
+  const targetDate = normalizeDateToUTC(dateStr);
+
+  // Fetch all active operators
+  const activeOperators = await User.find({ role: 'OPERATOR', status: 'ACTIVE' }).select('_id').lean();
+  const totalWorkers = activeOperators.length;
+
+  // Fetch all attendance records for targetDate
+  const records = await Attendance.find({ date: targetDate }).lean();
+
+  let presentCount = 0;
+  let absentCount = 0;
+  let onLeaveCount = 0;
+  let halfDayCount = 0;
+  let totalHoursWorked = 0;
+  let totalOvertimeHours = 0;
+
+  for (const r of records) {
+    if (r.status === 'PRESENT') presentCount++;
+    else if (r.status === 'ABSENT') absentCount++;
+    else if (r.status === 'ON_LEAVE') onLeaveCount++;
+    else if (r.status === 'HALF_DAY') halfDayCount++;
+    totalHoursWorked += Number(r.hoursWorked || 0);
+    totalOvertimeHours += Number(r.overtimeHours || 0);
+  }
+
+  const recordedOperatorIds = new Set(records.map((r) => r.operatorId.toString()));
+  const unmarkedCount = activeOperators.filter((op) => !recordedOperatorIds.has(op._id.toString())).length;
+
+  // Effective attendance rate calculation (PRESENT + 0.5 * HALF_DAY) / totalWorkers
+  const attendancePercentage =
+    totalWorkers > 0 ? Number((((presentCount + halfDayCount * 0.5) / totalWorkers) * 100).toFixed(1)) : 0;
+
+  return {
+    date: targetDate,
+    totalWorkers,
+    presentCount,
+    absentCount,
+    onLeaveCount,
+    halfDayCount,
+    unmarkedCount,
+    attendancePercentage,
+    totalHoursWorked: Number(totalHoursWorked.toFixed(2)),
+    totalOvertimeHours: Number(totalOvertimeHours.toFixed(2)),
+  };
+}
+
+/**
+ * Fetch attendance records with filtering by date or range, department, search, and status.
+ */
+export async function getAttendanceRecords({
+  date,
+  startDate,
+  endDate,
+  department,
+  search,
+  status,
+  page = 1,
+  limit = 50,
+}) {
+  // Build operator profiles mapping
+  const profileQuery = {};
+  if (department && department !== 'ALL') {
+    profileQuery.department = department;
+  }
+  const profiles = await OperatorProfile.find(profileQuery).lean();
+  const profileMap = new Map();
+  for (const p of profiles) {
+    profileMap.set(p.userId.toString(), p);
+  }
+
+  // Operators matching profiles & search query
+  const operatorUserQuery = {
+    role: 'OPERATOR',
+    status: 'ACTIVE',
+  };
+  if (department && department !== 'ALL') {
+    operatorUserQuery._id = { $in: Array.from(profileMap.keys()) };
+  }
+  if (search && search.trim()) {
+    const s = search.trim();
+    const regex = new RegExp(s, 'i');
+    const matchingCodesUserIds = profiles
+      .filter((p) => regex.test(p.employeeCode))
+      .map((p) => p.userId);
+
+    operatorUserQuery.$or = [
+      { name: regex },
+      { email: regex },
+      { _id: { $in: matchingCodesUserIds } },
+    ];
+  }
+
+  const operators = await User.find(operatorUserQuery).select('name email phone status').lean();
+  const operatorMap = new Map();
+  for (const op of operators) {
+    operatorMap.set(op._id.toString(), op);
+  }
+  const filteredOperatorIds = Array.from(operatorMap.keys());
+
+  // Check if range/monthly view
+  if (startDate && endDate) {
+    const startUTC = normalizeDateToUTC(startDate);
+    const endUTC = normalizeDateToUTC(endDate);
+    endUTC.setUTCHours(23, 59, 59, 999);
+
+    const attQuery = {
+      operatorId: { $in: filteredOperatorIds },
+      date: { $gte: startUTC, $lte: endUTC },
+    };
+    if (status && status !== 'ALL') {
+      attQuery.status = status;
+    }
+
+    const total = await Attendance.countDocuments(attQuery);
+    const records = await Attendance.find(attQuery)
+      .populate('shiftId', 'shiftCode name startTime endTime')
+      .populate('verifiedBy', 'name email')
+      .sort({ date: -1, createdAt: -1 })
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit))
+      .lean();
+
+    const formatted = records.map((r) => {
+      const op = operatorMap.get(r.operatorId.toString()) || {};
+      const prof = profileMap.get(r.operatorId.toString()) || {};
+      return {
+        _id: r._id,
+        operatorId: r.operatorId,
+        workerName: op.name || 'Unknown Worker',
+        workerEmail: op.email || '',
+        employeeCode: prof.employeeCode || 'N/A',
+        department: prof.department || 'GENERAL',
+        date: r.date,
+        shift: r.shiftId?.name || 'MORNING',
+        status: r.status,
+        checkInTime: r.checkInTime,
+        checkOutTime: r.checkOutTime,
+        hoursWorked: r.hoursWorked || 0,
+        overtimeHours: r.overtimeHours || 0,
+        verifiedBy: r.verifiedBy?.name || 'System',
+        remarks: r.remarks || '',
+      };
+    });
+
+    return {
+      records: formatted,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit)) || 1,
+      },
+    };
+  }
+
+  // Daily View (single date)
+  const targetDate = normalizeDateToUTC(date);
+  const attendanceRecords = await Attendance.find({
+    operatorId: { $in: filteredOperatorIds },
+    date: targetDate,
+  })
+    .populate('shiftId', 'shiftCode name startTime endTime')
+    .populate('verifiedBy', 'name email')
+    .lean();
+
+  const attMap = new Map();
+  for (const att of attendanceRecords) {
+    attMap.set(att.operatorId.toString(), att);
+  }
+
+  // Combine every active operator with their attendance (or UNMARKED if not yet logged)
+  let items = filteredOperatorIds.map((opId) => {
+    const op = operatorMap.get(opId);
+    const prof = profileMap.get(opId) || {};
+    const att = attMap.get(opId);
+    return {
+      _id: att?._id || null,
+      operatorId: opId,
+      workerName: op?.name || 'Unknown Worker',
+      workerEmail: op?.email || '',
+      employeeCode: prof.employeeCode || 'N/A',
+      department: prof.department || 'GENERAL',
+      skillLevel: prof.skillLevel || 'LEVEL_1',
+      date: targetDate,
+      shift: att?.shiftId?.name || 'MORNING',
+      status: att ? att.status : 'UNMARKED',
+      checkInTime: att?.checkInTime || null,
+      checkOutTime: att?.checkOutTime || null,
+      hoursWorked: att?.hoursWorked || 0,
+      overtimeHours: att?.overtimeHours || 0,
+      verifiedBy: att?.verifiedBy?.name || (att ? 'System' : 'Not Verified'),
+      remarks: att?.remarks || '',
+    };
+  });
+
+  if (status && status !== 'ALL') {
+    items = items.filter((it) => it.status === status);
+  }
+
+  const total = items.length;
+  const paginated = items.slice((Number(page) - 1) * Number(limit), Number(page) * Number(limit));
+
+  return {
+    records: paginated,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      totalPages: Math.ceil(total / Number(limit)) || 1,
+    },
+  };
+}
+
+/**
+ * Mark or update worker attendance by authorized personnel (ADMIN/Supervisor).
+ * Enforces validation, calculates work and overtime hours, prevents duplicate records,
+ * writes audit trail to AuditLog, and emits real-time event.
+ */
+export async function markWorkerAttendance({
+  operatorId,
+  date,
+  status,
+  checkInTime,
+  checkOutTime,
+  shiftId,
+  remarks,
+  actorUser,
+}) {
+  if (!operatorId) {
+    throw new Error('Worker/Operator ID is required');
+  }
+  const operator = await User.findOne({ _id: operatorId, role: 'OPERATOR' });
+  if (!operator) {
+    throw new Error('Worker not found or invalid operator role');
+  }
+
+  const validStatuses = ['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE'];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`Invalid status "${status}". Permitted: ${validStatuses.join(', ')}`);
+  }
+
+  // Shift resolution
+  let resolvedShiftId = shiftId;
+  if (!resolvedShiftId) {
+    const activeShift = await Shift.findOne({ isActive: true });
+    resolvedShiftId = activeShift?._id;
+    if (!resolvedShiftId) {
+      const anyShift = await Shift.findOne({});
+      resolvedShiftId = anyShift?._id;
+    }
+  }
+
+  // Normalize date to UTC midnight
+  const targetDate = normalizeDateToUTC(date);
+
+  // Time and hour calculations
+  let parsedCheckIn = checkInTime ? new Date(checkInTime) : null;
+  let parsedCheckOut = checkOutTime ? new Date(checkOutTime) : null;
+  let hoursWorked = 0;
+  let overtimeHours = 0;
+
+  if (parsedCheckIn && parsedCheckOut) {
+    if (parsedCheckOut.getTime() < parsedCheckIn.getTime()) {
+      throw new Error('Check-out time cannot be before check-in time');
+    }
+    const diffMs = parsedCheckOut.getTime() - parsedCheckIn.getTime();
+    hoursWorked = Math.max(0.1, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
+    overtimeHours = hoursWorked > 8 ? Number((hoursWorked - 8).toFixed(2)) : 0;
+  } else if (status === 'PRESENT') {
+    hoursWorked = 8.0;
+    overtimeHours = 0;
+  } else if (status === 'HALF_DAY') {
+    hoursWorked = 4.0;
+    overtimeHours = 0;
+  } else if (status === 'ABSENT' || status === 'ON_LEAVE') {
+    hoursWorked = 0;
+    overtimeHours = 0;
+    parsedCheckIn = null;
+    parsedCheckOut = null;
+  }
+
+  // Prevent duplicate records & perform upsert
+  let record = await Attendance.findOne({
+    operatorId,
+    date: targetDate,
+  });
+
+  const isUpdate = !!record;
+  const previousState = isUpdate ? record.toObject() : null;
+
+  if (record) {
+    record.status = status;
+    record.shiftId = resolvedShiftId;
+    record.checkInTime = parsedCheckIn;
+    record.checkOutTime = parsedCheckOut;
+    record.hoursWorked = hoursWorked;
+    record.overtimeHours = overtimeHours;
+    record.verifiedBy = actorUser._id;
+    if (remarks !== undefined) record.remarks = remarks;
+    await record.save();
+  } else {
+    record = await Attendance.create({
+      operatorId,
+      date: targetDate,
+      shiftId: resolvedShiftId,
+      checkInTime: parsedCheckIn,
+      checkOutTime: parsedCheckOut,
+      hoursWorked,
+      overtimeHours,
+      status,
+      verifiedBy: actorUser._id,
+      remarks: remarks || '',
+    });
+  }
+
+  // Audit Log creation
+  await AuditLog.create({
+    actorId: actorUser._id,
+    actorRole: actorUser.role || 'ADMIN',
+    action: isUpdate ? 'ATTENDANCE_UPDATED' : 'ATTENDANCE_MARKED',
+    entityType: 'ATTENDANCE',
+    entityId: record._id,
+    previousState,
+    newState: record.toObject(),
+    notes:
+      remarks ||
+      `Attendance ${isUpdate ? 'updated' : 'marked'} as ${status} for ${operator.name} on ${targetDate.toISOString().slice(0, 10)}`,
+  });
+
+  // Real-time broadcast
+  broadcastEvent(null, 'attendance:updated', {
+    attendanceId: record._id,
+    operatorId: record.operatorId,
+    operatorName: operator.name,
+    date: targetDate,
+    status: record.status,
+    hoursWorked: record.hoursWorked,
+    overtimeHours: record.overtimeHours,
+    actor: actorUser.name,
+    timestamp: new Date(),
+  });
+
+  return record;
+}
+
+/**
+ * List all active operators with their department and code for quick selection.
+ */
+export async function getAttendanceWorkers() {
+  const operators = await User.find({ role: 'OPERATOR', status: 'ACTIVE' })
+    .select('name email phone status')
+    .sort({ name: 1 })
+    .lean();
+
+  const profiles = await OperatorProfile.find({
+    userId: { $in: operators.map((o) => o._id) },
+  }).lean();
+
+  const profMap = new Map();
+  for (const p of profiles) {
+    profMap.set(p.userId.toString(), p);
+  }
+
+  return operators.map((op) => ({
+    _id: op._id,
+    name: op.name,
+    email: op.email,
+    phone: op.phone,
+    employeeCode: profMap.get(op._id.toString())?.employeeCode || 'N/A',
+    department: profMap.get(op._id.toString())?.department || 'GENERAL',
+    hourlyWageRate: profMap.get(op._id.toString())?.hourlyWageRate || 0,
+    skillLevel: profMap.get(op._id.toString())?.skillLevel || 'LEVEL_1',
+  }));
+}
+
+/**
+ * Fetch complete audit trail for a specific attendance record.
+ */
+export async function getAttendanceAuditHistory(recordId) {
+  if (!mongoose.Types.ObjectId.isValid(recordId)) {
+    throw new Error('Invalid attendance record ID');
+  }
+
+  const logs = await AuditLog.find({
+    entityType: 'ATTENDANCE',
+    entityId: recordId,
+  })
+    .populate('actorId', 'name email role')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return logs;
+}
+
+/**
+ * Generate CSV formatted string from filtered attendance records.
+ */
+export async function generateAttendanceCsv(filters) {
+  const data = await getAttendanceRecords({
+    ...filters,
+    page: 1,
+    limit: 2000,
+  });
+
+  const headers = [
+    'Date',
+    'Employee Code',
+    'Worker Name',
+    'Department',
+    'Status',
+    'Check-In Time',
+    'Check-Out Time',
+    'Hours Worked',
+    'Overtime Hours',
+    'Shift',
+    'Verified By',
+    'Remarks',
+  ];
+
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = data.records.map((r) => [
+    escapeCsv(r.date ? new Date(r.date).toISOString().slice(0, 10) : ''),
+    escapeCsv(r.employeeCode),
+    escapeCsv(r.workerName),
+    escapeCsv(r.department),
+    escapeCsv(r.status),
+    escapeCsv(r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString('en-IN') : 'N/A'),
+    escapeCsv(r.checkOutTime ? new Date(r.checkOutTime).toLocaleTimeString('en-IN') : 'N/A'),
+    escapeCsv(r.hoursWorked),
+    escapeCsv(r.overtimeHours),
+    escapeCsv(r.shift),
+    escapeCsv(r.verifiedBy),
+    escapeCsv(r.remarks),
+  ]);
+
+  return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+}
