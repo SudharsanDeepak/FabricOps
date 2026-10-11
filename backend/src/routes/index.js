@@ -2,15 +2,13 @@ import { Router } from 'express';
 import healthRoutes from './health.routes.js';
 import authRoutes from './auth.routes.js';
 import productRoutes from './product.routes.js';
-import orderRequestRoutes from './orderRequest.routes.js';
 import quotationRoutes from './quotation.routes.js';
-import orderRoutes from './order.routes.js';
-import messageRoutes from './message.routes.js';
 import notificationRoutes from './notification.routes.js';
-import inventoryRoutes from './inventory.routes.js';
-import procurementRoutes from './procurement.routes.js';
-import productionPlanningRoutes from './productionPlanning.routes.js';
-import operatorRoutes from './operator.routes.js';
+
+// Consolidated Domain Routers
+import orderRoutes, { orderRequestsRouter, messagesRouter } from './order.routes.js';
+import inventoryRoutes, { procurementRouter } from './inventory.routes.js';
+import operatorRoutes, { productionPlanningRouter } from './operator.routes.js';
 
 const router = Router();
 
@@ -23,32 +21,35 @@ router.use('/auth', authRoutes);
 // Fabric Catalog & Products
 router.use('/products', productRoutes);
 
-// Customer Inquiries / Order Requests
-router.use('/order-requests', orderRequestRoutes);
+// Customer Inquiries / Order Requests (from consolidated order.routes.js)
+router.use('/order-requests', orderRequestsRouter);
 
 // Quotations, Pricing & Negotiation
 router.use('/quotations', quotationRoutes);
 
-// Orders & Tracking
+// Orders & Tracking (from consolidated order.routes.js)
 router.use('/orders', orderRoutes);
 
-// Order-specific Communication Messages
-router.use('/messages', messageRoutes);
+// Order-specific Communication Messages (from consolidated order.routes.js)
+router.use('/messages', messagesRouter);
 
 // Real-Time Notifications
 router.use('/notifications', notificationRoutes);
 
-// Admin Inventory Management & Stock Movements
+// Admin Inventory Management & Stock Movements (from consolidated inventory.routes.js)
 router.use('/inventory', inventoryRoutes);
 
-// Procurement, Purchase Requests & PO Tracking
-router.use('/procurement', procurementRoutes);
+// Procurement, Purchase Requests & PO Tracking (from consolidated inventory.routes.js)
+router.use('/procurement', procurementRouter);
 
-// Production Routing & Scheduling
-router.use('/production-planning', productionPlanningRoutes);
+// Production Routing & Scheduling (from consolidated operator.routes.js)
+router.use('/production-planning', productionPlanningRouter);
 
-// Factory Floor Operator Machine Dashboard & Terminals
+// Factory Floor Operator Machine Dashboard & Terminals (from consolidated operator.routes.js)
 router.use('/operator', operatorRoutes);
+
+// Worker Attendance Management direct route alias
+router.use('/attendance', operatorRoutes);
 
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {

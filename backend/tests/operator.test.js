@@ -731,4 +731,205 @@ describe('Prompt 6 — Operator Machine Dashboard & Floor Terminal', () => {
       expect(activeJob.version).toBeDefined();
     });
   });
+
+  // =========================================================================
+  // 6. FACTORY WORKER ATTENDANCE MANAGEMENT SYSTEM (ADMIN)
+  // =========================================================================
+  describe('6. Worker Attendance Management System (Admin)', () => {
+    it('rejects unauthorized roles (Customer & Operator) from marking attendance', async () => {
+      const res = await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: '2026-10-11',
+          status: 'PRESENT',
+        });
+      expect(res.statusCode).toBe(403);
+
+      const opRes = await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${operatorToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: '2026-10-11',
+          status: 'PRESENT',
+        });
+      expect(opRes.statusCode).toBe(403);
+    });
+
+    it('allows Admin to mark worker attendance, computes hours & overtime, and writes audit log', async () => {
+      const markDate = '2026-10-11';
+      const checkIn = new Date('2026-10-11T08:00:00.000Z');
+      const checkOut = new Date('2026-10-11T17:30:00.000Z'); // 9.5 hours
+
+      const res = await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: markDate,
+          status: 'PRESENT',
+          checkInTime: checkIn.toISOString(),
+          checkOutTime: checkOut.toISOString(),
+          remarks: 'Full morning and overtime run on loom #1',
+        });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.status).toBe('PRESENT');
+      expect(res.body.data.hoursWorked).toBe(9.5);
+      expect(res.body.data.overtimeHours).toBe(1.5);
+
+      // Verify AuditLog was created
+      const audit = await AuditLog.findOne({
+        entityType: 'ATTENDANCE',
+        entityId: res.body.data._id,
+      });
+      expect(audit).toBeDefined();
+      expect(audit.action).toBe('ATTENDANCE_MARKED');
+      expect(audit.actorId.toString()).toBe(adminUser._id.toString());
+    });
+
+    it('updates attendance, prevents duplicate documents for same date, and records previous state in audit', async () => {
+      const markDate = '2026-10-12';
+
+      // 1. Initial mark as PRESENT
+      const res1 = await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: markDate,
+          status: 'PRESENT',
+        });
+      expect(res1.statusCode).toBe(200);
+      const recordId = res1.body.data._id;
+
+      // 2. Update to HALF_DAY
+      const res2 = await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: markDate,
+          status: 'HALF_DAY',
+          remarks: 'Left early for doctor appointment',
+        });
+      expect(res2.statusCode).toBe(200);
+      expect(res2.body.data._id).toBe(recordId); // Same document, no duplicate!
+      expect(res2.body.data.status).toBe('HALF_DAY');
+      expect(res2.body.data.hoursWorked).toBe(4);
+
+      // Verify AuditLog for update
+      const updateAudit = await AuditLog.findOne({
+        entityType: 'ATTENDANCE',
+        entityId: recordId,
+        action: 'ATTENDANCE_UPDATED',
+      });
+      expect(updateAudit).toBeDefined();
+      expect(updateAudit.previousState.status).toBe('PRESENT');
+      expect(updateAudit.newState.status).toBe('HALF_DAY');
+    });
+
+    it('returns attendance dashboard summary with accurate real-time metrics and percentages', async () => {
+      const summaryDate = '2026-10-13';
+
+      // Mark operatorUser as PRESENT
+      await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: summaryDate,
+          status: 'PRESENT',
+        });
+
+      // Mark unassignedOperator as ON_LEAVE
+      await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: unassignedOperator._id,
+          date: summaryDate,
+          status: 'ON_LEAVE',
+          remarks: 'Planned annual leave',
+        });
+
+      const res = await request(app)
+        .get(`/api/v1/operator/attendance/dashboard-summary?date=${summaryDate}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.success).toBe(true);
+      const { data } = res.body;
+      expect(data.totalWorkers).toBe(2);
+      expect(data.presentCount).toBe(1);
+      expect(data.onLeaveCount).toBe(1);
+      expect(data.absentCount).toBe(0);
+      expect(data.attendancePercentage).toBe(50);
+    });
+
+    it('queries attendance records with filters for daily view and date range view', async () => {
+      const queryDate = '2026-10-14';
+
+      await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: queryDate,
+          status: 'PRESENT',
+        });
+
+      // Daily view query
+      const dailyRes = await request(app)
+        .get(`/api/v1/operator/attendance/records?date=${queryDate}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(dailyRes.statusCode).toBe(200);
+      expect(dailyRes.body.data.records).toHaveLength(2); // Both operators listed, 1 PRESENT, 1 UNMARKED
+
+      // Search filter
+      const searchRes = await request(app)
+        .get(`/api/v1/operator/attendance/records?date=${queryDate}&search=Rajesh`)
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(searchRes.statusCode).toBe(200);
+      expect(searchRes.body.data.records).toHaveLength(1);
+      expect(searchRes.body.data.records[0].workerName).toBe('Rajesh Kumar');
+
+      // Department filter
+      const deptRes = await request(app)
+        .get(`/api/v1/operator/attendance/records?date=${queryDate}&department=WEAVING`)
+        .set('Authorization', `Bearer ${adminToken}`);
+      expect(deptRes.statusCode).toBe(200);
+      expect(deptRes.body.data.records).toHaveLength(1);
+      expect(deptRes.body.data.records[0].department).toBe('WEAVING');
+    });
+
+    it('exports attendance records to CSV and returns downloadable text/csv content', async () => {
+      const exportDate = '2026-10-15';
+
+      await request(app)
+        .post('/api/v1/operator/attendance/mark')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          operatorId: operatorUser._id,
+          date: exportDate,
+          status: 'PRESENT',
+        });
+
+      const res = await request(app)
+        .get(`/api/v1/operator/attendance/export?date=${exportDate}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toContain('text/csv');
+      expect(res.text).toContain('Employee Code');
+      expect(res.text).toContain('Rajesh Kumar');
+      expect(res.text).toContain('WEAVING');
+      expect(res.text).toContain('PRESENT');
+    });
+  });
 });
+

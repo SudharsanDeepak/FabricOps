@@ -73,20 +73,20 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+    <div className="flex flex-col h-full bg-[#0D1220] rounded-xl border border-slate-800 overflow-hidden shadow-xs">
       {/* Thread Header */}
-      <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-slate-800 bg-[#090D17]/80 flex items-center justify-between">
         <div>
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{title}</h4>
+          <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">{title}</h4>
           <p className="text-[11px] text-slate-500">Persistent order communication thread &bull; Mill & Customer</p>
         </div>
-        <span className="text-[10px] font-mono bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+        <span className="text-[10px] font-mono bg-blue-100 text-[#FF9FFC] px-2 py-0.5 rounded-full font-semibold">
           {messages.length} Messages
         </span>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[220px] max-h-[360px] bg-slate-50/30">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[220px] max-h-[360px] bg-slate-900/60/30">
         {loading ? (
           <div className="flex items-center justify-center h-32 text-slate-400 text-xs gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
@@ -107,7 +107,7 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
               >
                 <div className="flex items-center gap-1.5 mb-1 px-1">
-                  <span className="text-[11px] font-semibold text-slate-700">
+                  <span className="text-[11px] font-semibold text-slate-300">
                     {msg.senderName}
                   </span>
                   <span
@@ -128,7 +128,7 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs shadow-xs ${
                     isMe
                       ? 'bg-blue-600 text-white rounded-br-xs'
-                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs'
+                      : 'bg-slate-900 text-slate-100 border border-slate-700 rounded-bl-xs'
                   }`}
                 >
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
@@ -161,15 +161,15 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
       </div>
 
       {/* Input Box */}
-      <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200 bg-white">
+      <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 bg-[#0D1220]">
         {showAttachmentInput && (
-          <div className="mb-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1.5">
-            <div className="flex justify-between items-center text-[11px] font-semibold text-slate-600">
+          <div className="mb-2 p-2 bg-slate-900/60 border border-slate-800 rounded-lg text-xs space-y-1.5">
+            <div className="flex justify-between items-center text-[11px] font-semibold text-slate-400">
               <span>Attach Specification Document / Tech Pack:</span>
               <button
                 type="button"
                 onClick={() => setShowAttachmentInput(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-400"
               >
                 &times;
               </button>
@@ -179,14 +179,14 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
               placeholder="Document Title (e.g. Lab_Dip_Sample_Specs.pdf)"
               value={attachmentName}
               onChange={(e) => setAttachmentName(e.target.value)}
-              className="w-full text-xs px-2 py-1 border border-slate-300 rounded bg-white"
+              className="w-full text-xs px-2 py-1 border border-slate-700 rounded bg-slate-900 text-slate-200"
             />
             <input
               type="text"
               placeholder="Document URL / Cloud Reference"
               value={attachmentUrl}
               onChange={(e) => setAttachmentUrl(e.target.value)}
-              className="w-full text-xs px-2 py-1 border border-slate-300 rounded bg-white"
+              className="w-full text-xs px-2 py-1 border border-slate-700 rounded bg-slate-900 text-slate-200"
             />
           </div>
         )}
@@ -198,7 +198,7 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
             size="sm"
             onClick={() => setShowAttachmentInput(!showAttachmentInput)}
             title="Attach Document"
-            className="text-slate-500 hover:text-slate-700 h-9 px-2"
+            className="text-slate-500 hover:text-slate-300 h-9 px-2"
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -208,7 +208,7 @@ export function MessageThread({ threadType, referenceId, title = 'Negotiation Th
             placeholder="Type your message or negotiate terms..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-slate-700 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
           />
 
           <Button

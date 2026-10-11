@@ -99,70 +99,96 @@ export function AppShell({ currentSection, onSectionChange, children }) {
     role === 'ADMIN' ? adminNav : role === 'CUSTOMER' ? customerNav : operatorNav;
 
   const roleThemeBadge = {
-    ADMIN: 'bg-blue-100 text-blue-800 border-blue-200',
-    CUSTOMER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    OPERATOR: 'bg-purple-100 text-purple-800 border-purple-200',
+    ADMIN: 'bg-purple-950/50 text-purple-300 border-purple-500/40',
+    CUSTOMER: 'bg-sky-950/50 text-sky-300 border-sky-500/40',
+    OPERATOR: 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40',
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col antialiased">
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
+    <div className="min-h-screen bg-[#070A12] text-slate-100 flex flex-col font-opensans selection:bg-[#5227FF] selection:text-white">
+      {/* INDUSTRIAL STATUS TICKER */}
+      <div className="bg-[#0B0F1C]/95 border-b border-slate-800/80 px-4 py-2 text-xs text-slate-300">
+        <div className="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 text-[#FF9FFC] font-rajdhani font-bold uppercase tracking-wider text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-[#FF9FFC] animate-ping"></span>
+              MILL SYSTEM ONLINE
+            </span>
+            <span className="text-slate-700">|</span>
+            <span className="text-slate-300 text-[11px] font-mono font-medium">Shift A Active (06:00 - 14:00)</span>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <span className="text-slate-300 text-[11px] hidden sm:inline">Power Grid: <strong className="text-white font-mono">412 kW</strong></span>
+            <span className="text-slate-700 hidden sm:inline">|</span>
+            <div
+              onClick={checkHealth}
+              title="Click to re-ping API health"
+              className="cursor-pointer inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-white transition-colors"
+            >
+              <span>API:</span>
+              <strong className={healthStatus.healthy ? 'text-emerald-400 font-mono font-semibold' : 'text-amber-400 font-mono font-semibold'}>
+                {healthStatus.loading ? 'Pinging...' : healthStatus.healthy ? 'Online' : 'Degraded'}
+              </strong>
+              <RefreshCw className={`h-2.5 w-2.5 text-slate-400 ${healthStatus.loading ? 'animate-spin' : ''}`} />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-[11px]">
+            <span className="text-[#FF9FFC] font-semibold font-mono">12,450 kg Yarn in Silos</span>
+            <span className="text-slate-700">•</span>
+            <span className="text-emerald-400 font-semibold font-mono">96.8% First-Pass Yield</span>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => onSectionChange(role === 'ADMIN' ? 'attendance' : role === 'CUSTOMER' ? 'my-orders' : 'attendance')}
+              className="text-[#FF9FFC] hover:text-white font-rajdhani font-bold uppercase tracking-wider underline flex items-center gap-1 transition-colors"
+            >
+              {role === 'ADMIN' ? 'Attendance & Wages →' : role === 'CUSTOMER' ? 'Order Tracking →' : 'My Timesheet →'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Sticky Header */}
+      <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-800/80 bg-[#0D1220]/90 px-4 backdrop-blur-md sm:px-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
-            <Factory className="h-6 w-6" />
+          <div className="flex h-10 w-10 items-center justify-center bg-[#5227FF]/15 border border-[#5227FF]/30 text-[#FF9FFC] rounded-lg shadow-sm">
+            <Factory className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold tracking-tight text-slate-900 text-base">FabricOps</span>
-              <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${roleThemeBadge[role] || 'bg-slate-100'}`}>
+              <span className="font-bold tracking-tight text-white font-rajdhani text-lg">EVEREST TEXTILE MILLS</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gradient-to-r from-[#5227FF] to-[#FF9FFC] text-white font-bold uppercase rounded">
+                MillOS
+              </span>
+              <span className={`text-[10px] font-rajdhani font-bold uppercase tracking-wider px-2 py-0.5 border rounded ${roleThemeBadge[role] || 'bg-slate-800 text-slate-300 border-slate-700'}`}>
                 {role}
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">FabricOps Manufacturing Operating System</p>
+            <p className="text-xs text-slate-400 font-normal">FabricOps Digital Loom Operating System &bull; ASTM D5430</p>
           </div>
         </div>
 
-        {/* User Info & Telemetry */}
+        {/* User Info & Actions */}
         <div className="flex items-center gap-3">
-          <div
-            onClick={checkHealth}
-            title="Click to re-ping API health"
-            className="hidden sm:flex items-center gap-2 cursor-pointer px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs hover:bg-slate-100 transition-colors"
-          >
-            <span
-              className={`h-2 w-2 rounded-full ${
-                healthStatus.healthy ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`}
-            />
-            <span className="text-slate-600 font-medium">
-              API: {healthStatus.loading ? 'Checking...' : healthStatus.healthy ? 'Online' : 'Degraded'}
-            </span>
-            <RefreshCw className={`h-3 w-3 text-slate-400 ${healthStatus.loading ? 'animate-spin' : ''}`} />
-          </div>
-
-          <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-
           {/* User Profile Pill & Logout */}
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs border border-blue-200 shadow-sm">
+            <div className="h-8 w-8 bg-[#5227FF]/20 text-[#FF9FFC] flex items-center justify-center font-bold text-xs border border-[#5227FF]/40 rounded-lg shadow-sm">
               {user?.name?.[0] || 'U'}
             </div>
             <div className="hidden md:block text-left text-xs">
-              <p className="font-semibold text-slate-800 leading-none">{user?.name || 'User'}</p>
-              <p className="text-[11px] text-slate-500 mt-0.5 truncate max-w-[150px]">
+              <p className="font-bold text-white font-rajdhani uppercase tracking-wider leading-none">{user?.name || 'User'}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[150px] font-mono">
                 {profile?.companyName || (profile?.department ? `Dept: ${profile.department}` : user?.email)}
               </p>
             </div>
 
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={logout}
               title="Sign Out"
-              className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 h-8 px-2 text-xs"
+              className="text-slate-300 hover:text-red-400 hover:bg-red-950/30 hover:border-red-800/50 h-8 px-2.5 text-xs font-rajdhani font-bold uppercase tracking-wider border-slate-700/80"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline ml-1.5">Sign Out</span>
             </Button>
           </div>
@@ -172,12 +198,12 @@ export function AppShell({ currentSection, onSectionChange, children }) {
       {/* Main Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-slate-200 bg-white p-4 flex flex-col justify-between shrink-0 hidden md:flex">
+        <aside className="w-64 border-r border-slate-800/80 bg-[#0B0F1C]/95 p-4 flex flex-col justify-between shrink-0 hidden md:flex">
           <div className="space-y-6">
             <div>
-              <div className="px-2 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                <span>{role} Navigation</span>
-                <span className="text-[10px] text-slate-400 font-mono">RBAC Active</span>
+              <div className="px-2 mb-2 text-[11px] font-rajdhani font-bold uppercase tracking-widest text-[#FF9FFC] flex items-center justify-between">
+                <span>{role} Consoles</span>
+                <span className="text-[10px] text-emerald-400 font-mono font-semibold">ONLINE</span>
               </div>
               <nav className="space-y-1">
                 {currentNav.map((item) => {
@@ -187,25 +213,23 @@ export function AppShell({ currentSection, onSectionChange, children }) {
                     <button
                       key={item.id}
                       onClick={() => onSectionChange(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs font-rajdhani font-bold uppercase tracking-wider rounded-lg transition-all ${isActive
+                          ? 'bg-gradient-to-r from-[#5227FF]/25 to-[#FF9FFC]/10 text-white border-l-2 border-[#5227FF] shadow-xs'
+                          : 'text-slate-400 hover:bg-slate-800/40 hover:text-white'
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <Icon className={`h-4 w-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+                        <Icon className={`h-4 w-4 ${isActive ? 'text-[#FF9FFC]' : 'text-slate-500'}`} />
                         <span>{item.label}</span>
                       </div>
                       {item.badge && (
                         <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                            item.badge === 'Alert'
-                              ? 'bg-rose-100 text-rose-700'
-                              : item.badge === 'Live'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
+                          className={`text-[10px] px-1.5 py-0.5 font-bold uppercase tracking-wider border rounded ${item.badge === 'Alert'
+                              ? 'bg-red-950/40 text-red-300 border-red-800/50'
+                              : item.badge === 'Live' || item.badge === 'Live Tower'
+                                ? 'bg-emerald-950/40 text-emerald-300 border-emerald-800/50'
+                                : 'bg-[#5227FF]/20 text-[#FF9FFC] border-[#5227FF]/40'
+                            }`}
                         >
                           {item.badge}
                         </span>
@@ -217,30 +241,31 @@ export function AppShell({ currentSection, onSectionChange, children }) {
             </div>
 
             {/* Role Context Helper */}
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-              <div className="flex items-center gap-2 font-semibold text-slate-800 mb-1">
-                <Activity className="h-4 w-4 text-blue-600" />
-                <span>Session Clearance</span>
+            <div className="border border-slate-800/80 bg-[#0D1220]/80 p-3 text-xs rounded-xl relative">
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#5227FF] via-[#FF9FFC] to-transparent rounded-t-xl"></div>
+              <div className="flex items-center gap-2 font-bold font-rajdhani uppercase tracking-wider text-[#FF9FFC] mb-1">
+                <Activity className="h-4 w-4 text-[#5227FF]" />
+                <span>Station Authorization</span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                {role === 'ADMIN' && 'Full administrative authority across production, finance, orders, and operator wages.'}
-                {role === 'CUSTOMER' && 'Private portal restricted strictly to your quotes, confirmed orders, and invoices.'}
-                {role === 'OPERATOR' && 'Terminal authorized strictly for assigned looms, shift production, and breakdown alerts.'}
+              <p className="text-[11px] text-slate-400 leading-relaxed font-opensans">
+                {role === 'ADMIN' && 'Full administrative authority across production, finance, orders, and worker wages.'}
+                {role === 'CUSTOMER' && 'Private buyer portal restricted strictly to your quotes, confirmed orders, and invoices.'}
+                {role === 'OPERATOR' && 'Floor terminal authorized strictly for assigned looms, shift production, and breakdown alerts.'}
               </p>
             </div>
           </div>
 
           {/* User Account Info Bottom Bar */}
-          <div className="border-t border-slate-100 pt-3">
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
+          <div className="border-t border-slate-800/80 pt-3">
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
               <div className="truncate">
-                <p className="font-semibold text-slate-700">{user?.name}</p>
-                <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+                <p className="font-bold text-white font-rajdhani uppercase">{user?.name}</p>
+                <p className="text-[10px] text-slate-500 font-mono truncate">{user?.email}</p>
               </div>
               <button
                 onClick={logout}
                 title="Logout"
-                className="text-slate-400 hover:text-rose-600 p-1"
+                className="text-slate-500 hover:text-red-400 p-1 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
               </button>
@@ -249,7 +274,7 @@ export function AppShell({ currentSection, onSectionChange, children }) {
         </aside>
 
         {/* Content View */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#070A12] text-slate-100">
           {children}
         </main>
       </div>

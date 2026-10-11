@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireRoles } from '../middleware/rbac.middleware.js';
 import {
+  // Inventory
   getInventoryHandler,
   getInventoryItemByIdHandler,
   createInventoryItemHandler,
@@ -10,36 +11,74 @@ import {
   adjustStockHandler,
   getStockMovementsHandler,
   getShortageSummaryHandler,
+  // Procurement
+  createPurchaseRequestHandler,
+  getPurchaseRequestsHandler,
+  approvePurchaseRequestHandler,
+  rejectPurchaseRequestHandler,
+  createPurchaseOrderHandler,
+  getPurchaseOrdersHandler,
+  getPurchaseOrderByIdHandler,
+  cancelPurchaseOrderHandler,
+  getSuppliersHandler,
+  createSupplierHandler,
+  getProcurementOverviewHandler,
 } from '../controllers/inventory.controller.js';
 
-const router = Router();
+// ==========================================
+// 1. INVENTORY ROUTER
+// ==========================================
+const inventoryRouter = Router();
 
 // Shortage summaries & alerts
-router.get('/shortages', requireRoles('ADMIN'), getShortageSummaryHandler);
+inventoryRouter.get('/shortages', requireRoles('ADMIN'), getShortageSummaryHandler);
 
 // Immutable stock movements ledger
-router.get('/movements', requireRoles('ADMIN'), getStockMovementsHandler);
+inventoryRouter.get('/movements', requireRoles('ADMIN'), getStockMovementsHandler);
 
 // List inventory items with stock arithmetic
-router.get('/', requireRoles('ADMIN', 'OPERATOR'), getInventoryHandler);
+inventoryRouter.get('/', requireRoles('ADMIN', 'OPERATOR'), getInventoryHandler);
 
 // Single inventory item detail
-router.get('/:id', requireRoles('ADMIN', 'OPERATOR'), getInventoryItemByIdHandler);
+inventoryRouter.get('/:id', requireRoles('ADMIN', 'OPERATOR'), getInventoryItemByIdHandler);
 
 // Create new inventory item
-router.post('/', requireRoles('ADMIN'), createInventoryItemHandler);
+inventoryRouter.post('/', requireRoles('ADMIN'), createInventoryItemHandler);
 
 // Update inventory item metadata
-router.patch('/:id', requireRoles('ADMIN'), updateInventoryItemHandler);
+inventoryRouter.patch('/:id', requireRoles('ADMIN'), updateInventoryItemHandler);
 
 // Record Goods Receipt against PO (atomic transaction)
-router.post('/goods-receipt', requireRoles('ADMIN'), recordGoodsReceiptHandler);
+inventoryRouter.post('/goods-receipt', requireRoles('ADMIN'), recordGoodsReceiptHandler);
 
 // Issue material to production order or job
-router.post('/issue-material', requireRoles('ADMIN', 'OPERATOR'), issueMaterialHandler);
+inventoryRouter.post('/issue-material', requireRoles('ADMIN', 'OPERATOR'), issueMaterialHandler);
 
 // Physical audit stock adjustment
-router.post('/adjust-stock', requireRoles('ADMIN'), adjustStockHandler);
+inventoryRouter.post('/adjust-stock', requireRoles('ADMIN'), adjustStockHandler);
 
-export default router;
+// ==========================================
+// 2. PROCUREMENT ROUTER
+// ==========================================
+export const procurementRouter = Router();
 
+// Overview metrics & supplier delay statistics
+procurementRouter.get('/overview', requireRoles('ADMIN'), getProcurementOverviewHandler);
+
+// Suppliers
+procurementRouter.get('/suppliers', requireRoles('ADMIN'), getSuppliersHandler);
+procurementRouter.post('/suppliers', requireRoles('ADMIN'), createSupplierHandler);
+
+// Purchase Requests for shortages
+procurementRouter.get('/requests', requireRoles('ADMIN'), getPurchaseRequestsHandler);
+procurementRouter.post('/requests', requireRoles('ADMIN'), createPurchaseRequestHandler);
+procurementRouter.patch('/requests/:id/approve', requireRoles('ADMIN'), approvePurchaseRequestHandler);
+procurementRouter.patch('/requests/:id/reject', requireRoles('ADMIN'), rejectPurchaseRequestHandler);
+
+// Purchase Orders
+procurementRouter.get('/orders', requireRoles('ADMIN'), getPurchaseOrdersHandler);
+procurementRouter.post('/orders', requireRoles('ADMIN'), createPurchaseOrderHandler);
+procurementRouter.get('/orders/:id', requireRoles('ADMIN'), getPurchaseOrderByIdHandler);
+procurementRouter.patch('/orders/:id/cancel', requireRoles('ADMIN'), cancelPurchaseOrderHandler);
+
+export default inventoryRouter;
