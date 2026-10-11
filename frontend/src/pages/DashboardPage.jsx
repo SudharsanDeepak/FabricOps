@@ -41,6 +41,7 @@ import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import AeroShards from '../components/ui/AeroShards';
+import { AiQualityConsole } from '../components/common/AiQualityConsole';
 
 export function DashboardPage({ currentSection, onNavigateSection }) {
   const { user, profile, role } = useAuth();
@@ -407,6 +408,25 @@ export function DashboardPage({ currentSection, onNavigateSection }) {
               </table>
             </div>
           </Card>
+          
+          {/* AI-Powered Quality Assurance & XGBoost Prediction Console */}
+          <div>
+            <AiQualityConsole
+              persona="MANAGER"
+              rollId="ROL-9041-A"
+              orderNumber="ORD-2026-0018"
+              customerName="Apex Garments Sourcing Pvt Ltd"
+              loomId="LOOM-AJ-01"
+              initialData={{
+                fabric_type: 'Cotton',
+                colour: 'White',
+                yarn_batch_age_days: 10,
+                production_length_m: 1200,
+                downtime_min: 15,
+                production_duration_min: 130
+              }}
+            />
+          </div>
         </div>
       )}
 

@@ -53,6 +53,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { FeasibilityStudioModal } from '../components/quotations/FeasibilityStudioModal';
 import { AuthorizedOrderDocumentModal } from '../components/common/AuthorizedOrderDocumentModal';
 import { MessageThread } from '../components/common/MessageThread';
+import { AiQualityConsole } from '../components/common/AiQualityConsole';
 import { api } from '../lib/api';
 import { getSocket } from '../lib/socket';
 import { useAuth } from '../context/AuthContext';
@@ -1488,6 +1489,25 @@ export function AdminOrdersPage() {
                           </tbody>
                         </table>
                       </div>
+                    </div>
+
+                    {/* AI Fabric Quality Assurance & XGBoost Prediction Console */}
+                    <div>
+                      <AiQualityConsole
+                        persona="MANAGER"
+                        orderNumber={selectedOrder.orderNumber}
+                        rollId="ROL-9041-A"
+                        customerName={selectedOrder.customerId?.name || 'Apex Garments Sourcing Pvt Ltd'}
+                        loomId="LOOM-AJ-04"
+                        initialData={{
+                          fabric_type: 'Cotton',
+                          colour: 'White',
+                          yarn_batch_age_days: 10,
+                          production_length_m: 1200,
+                          downtime_min: 15,
+                          production_duration_min: 130
+                        }}
+                      />
                     </div>
 
                     {/* 4. Dispatch Bay & Carrier Manifest */}
