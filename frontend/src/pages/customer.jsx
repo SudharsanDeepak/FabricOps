@@ -46,6 +46,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import AeroShards from '../components/ui/AeroShards';
 import { AuthorizedOrderDocumentModal } from '../components/common/AuthorizedOrderDocumentModal';
 import { MessageThread } from '../components/common/MessageThread';
+import { AiQualityConsole } from '../components/common/AiQualityConsole';
 import { api } from '../lib/api';
 import { getSocket } from '../lib/socket';
 
@@ -1941,6 +1942,25 @@ export function CustomerOrdersPage({ onNavigateSection }) {
                           </tbody>
                         </table>
                       </div>
+                    </div>
+
+                    {/* Buyer Quality & Compliance Certificate (AI-Powered) */}
+                    <div>
+                      <AiQualityConsole
+                        persona="BUYER"
+                        orderNumber={selectedOrder.orderNumber}
+                        rollId="ROL-9041-A"
+                        customerName={selectedOrder.customerId?.name || 'Valued Buyer Partner'}
+                        loomId="LOOM-AJ-04"
+                        initialData={{
+                          fabric_type: 'Cotton',
+                          colour: 'White',
+                          yarn_batch_age_days: 10,
+                          production_length_m: 1200,
+                          downtime_min: 15,
+                          production_duration_min: 130
+                        }}
+                      />
                     </div>
 
                     {/* Freight Manifest & Gate Pass */}

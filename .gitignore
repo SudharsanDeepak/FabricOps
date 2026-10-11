@@ -39,3 +39,11 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Python Virtual Environments & Cache
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+

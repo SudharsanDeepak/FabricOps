@@ -9,6 +9,7 @@ import notificationRoutes from './notification.routes.js';
 import orderRoutes, { orderRequestsRouter, messagesRouter } from './order.routes.js';
 import inventoryRoutes, { procurementRouter } from './inventory.routes.js';
 import operatorRoutes, { productionPlanningRouter } from './operator.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = Router();
 
@@ -50,6 +51,9 @@ router.use('/operator', operatorRoutes);
 
 // Worker Attendance Management direct route alias
 router.use('/attendance', operatorRoutes);
+
+// AI-Powered Fabric Quality Assurance Service (FastAPI XGBoost integration)
+router.use('/ai', aiRoutes);
 
 // Root API v1 welcome & metadata
 router.get('/', (req, res) => {
